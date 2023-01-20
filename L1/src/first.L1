@@ -1,0 +1,107 @@
+(@go
+ (@go
+  0 2
+  call input 0
+  rdi <- rax
+  rsi <- 1
+  call allocate 2
+  rdi <- rax
+  mem rsp 0 <- rdi
+  //call print 1
+  rdi <- mem rsp 0
+  mem rsp -8 <- :arrayInit
+  call @initArray 1
+  :arrayInit
+  rdi <- rax
+  mem rsp 0 <- rdi
+  mem rsp -8 <- :gotMax
+  call @getMax 1
+  :gotMax
+  rdi <- rax
+  mem rsp 8 <- rax
+  //call print 1
+  rdi <- mem rsp 0
+  rsi <- mem rsp 8
+  rdx <- mem rdi 0
+  mem rsp -8 <- :fini
+  call @finnish 3
+  :fini
+  return
+ )
+ (@initArray
+  1 3
+  mem rsp 0 <- 0
+  mem rsp 16 <- rdi
+  rsi <- mem rdi 0
+  mem rsp 8 <- rsi
+  
+  :BEGIN
+  call input 0
+  rdi <- mem rsp 16
+  rsi <- mem rsp 0
+  rsi++
+  mem rsp 0 <- rsi
+  r11 @ rdi rsi 8
+  mem r11 0 <- rax
+  r10 <- mem rsp 8
+  cjump rsi < r10 :BEGIN
+  rax <- rdi
+  return
+ )
+ (@getMax
+  1 0
+  rsi <- 1
+  rdx <- 0
+  r8 <- mem rdi 0
+  :continue
+  rdx++
+  cjump r8 < rdx :END
+  r11 @ rdi rdx 8
+  r9 <- mem r11 0
+  cjump r9 < rsi :continue
+  rsi <- r9
+  goto :continue
+  :END
+  rax <- rsi
+  return
+ )
+ (@finnish
+  3 5
+  mem rsp 0 <- rdx // length
+  mem rsp 8 <- 0 // outer loop idx
+  mem rsp 16 <- rsi // max size
+  mem rsp 24 <- rdi // array pointer
+  :outer
+  mem rsp 8 += 1 // outer loop idx ++
+  r8 <- mem rsp 8 // store outer loop idx
+  mem rsp 32 <- r8 // use outer loop as initial final print idx
+  rcx <- mem rsp 0 // save length
+  r10 <- mem rsp 16 // save max size
+  cjump rcx < r8 :END2 // end if outer loop idx too big
+  rdx <- 0 // initialize inner loop idx
+  rsi <- mem rsp 24 // save array pointer 
+  rdi <- mem rsp 16 // initialize cur min
+  r11 @ rsi r8 8
+  mem rsp 32 <- r11
+  :inner
+  rdx++ // increment inner idx
+  cjump rcx < rdx :print // print if inner loop done
+  r11 @ rsi rdx 8 // get address of next value to compare to cur min
+  r9 <- mem r11 0 // store value of this address
+  cjump r9 < rdi :newMin // if we found a new min go to newMin
+  goto :inner // else do inner again
+  :newMin
+  rdi <- r9 // save new cur min
+  mem rsp 32 <- r11 // save idx associated with this new cur min
+  goto :inner
+  :print
+  r11 <- mem rsp 32 // save cur min idx
+  mem r11 0 <- r10
+  mem rsp 24 <- rsi
+  call print 1
+  goto :outer
+  :END2
+  rax <- 0
+  return
+ )
+)

@@ -1,0 +1,99 @@
+(@go
+ (@go
+  0
+  call input 0
+  rdi <- rax
+  rsi <- 1
+  call allocate 2
+  rdi <- rax
+  %array <- rdi
+  //call print 1
+  rdi <- %array
+  mem rsp -8 <- :arrayInit
+  call @initArray 1
+  :arrayInit
+  rdi <- rax
+  %array <- rdi
+  mem rsp -8 <- :gotMax
+  call @getMax 1
+  :gotMax
+  rdi <- %array
+  %max <- rax
+  //call print 1
+  rdi <- %array
+  rsi <- %max
+  rdx <- mem rdi 0
+  mem rsp -8 <- :fini
+  call @finnish 3
+  :fini
+  return
+ )
+ (@initArray
+  1
+  %index <- 0
+  %array <- rdi
+  rsi <- mem rdi 0
+  %length <- rsi
+  :BEGIN
+  call input 0
+  rdi <- %array
+  rsi <- %index
+  rsi++
+  %index <- rsi
+  %curIdx @ rdi rsi 8
+  mem %curIdx 0 <- rax
+  cjump rsi < %length :BEGIN
+  rax <- rdi
+  return
+ )
+ (@getMax
+  1
+  rsi <- 1
+  rdx <- 0
+  r8 <- mem rdi 0
+  :continue
+  rdx++
+  cjump r8 < rdx :END
+  %curIdx @ rdi rdx 8
+  r9 <- mem %curIdx 0
+  cjump r9 < rsi :continue
+  rsi <- r9
+  goto :continue
+  :END
+  rax <- rsi
+  return
+ )
+ (@finnish
+  3
+  %length <- rdx
+  %outerIdx <- 0
+  %maxVal <- rsi
+  %array <- rdi
+  :outer
+  %outerIdx++
+  cjump %length < %outerIdx :END2
+  %innerIdx <- 0
+  %curMin <- %maxVal
+  %curLoc @ %array %outerIdx 8
+  %curMinIdx <- %curLoc
+  :inner
+  %innerIdx++
+  cjump %length < %innerIdx :print
+  %curLoc @ %array %innerIdx 8
+  %cur <- mem %curLoc 0
+  cjump %cur < %curMin :newMin
+  goto :inner
+  :newMin
+  %curMin <- %cur
+  %curMinIdx <- %curLoc
+  goto :inner
+  :print
+  mem %curMinIdx 0 <- %maxVal
+  rdi <- %curMin
+  call print 1
+  goto :outer
+  :END2
+  rax <- 0
+  return
+ )
+)

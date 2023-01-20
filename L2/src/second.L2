@@ -1,0 +1,15 @@
+(@go
+ (@go
+  0
+  call input 0
+  %importantVariable <- rax
+  %importantVariable >>= 1
+  %importantVariable++
+  %importantVariable <<= 1
+  %importantVariable++
+  rdi <- %importantVariable
+  call print 1
+  rax <- 0
+  return
+ )
+)
