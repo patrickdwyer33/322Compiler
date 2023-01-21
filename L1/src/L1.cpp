@@ -3,10 +3,6 @@
 
 namespace L1 {
 
-  Item::Print() {
-    std::cout << "This is an empty Item." << std::endl;
-  }
-
   Number::Number(int64_t value) {
     Value = value;
     return;

@@ -32,8 +32,6 @@
 
 namespace pegtl = tao::TAO_PEGTL_NAMESPACE;
 
-using namespace pegtl;
-
 namespace L1 {
 
   std::vector<Item *> parsed_items;
@@ -61,9 +59,6 @@ namespace L1 {
   struct local_number:
     Number {} ;
 
-  struct call_arg_number:
-    Number {};
-
   struct comment: 
     pegtl::disable< 
       TAOCPP_PEGTL_STRING( "//" ), 
@@ -73,7 +68,7 @@ namespace L1 {
   struct u:
     pegtl::sor<
       Register,
-      label
+      Label
     >{};
 
   struct t:
@@ -90,7 +85,7 @@ namespace L1 {
 
   struct s:
     pegtl::sor<
-      label,
+      Label,
       t
     >{};
 
@@ -137,6 +132,26 @@ namespace L1 {
         >
       >
       pegtl::one<'='>
+    >{};
+
+  struct Lea:
+    pegtl::seq<
+      Register,
+      seps,
+      pegtl::one<'@'>,
+      seps,
+      Register,
+      seps,
+      Register,
+      seps,
+      Number
+    >{};
+
+  struct Operation:
+    pegtl::sor<
+      one_item_op,
+      two_item_op,
+      Lea
     >{};
 
   struct cmp:
@@ -250,6 +265,9 @@ namespace L1 {
       Value
     >{};
 
+  struct Instruction_operation3:
+    Lea {};
+
   struct Instruction_cjump:
     pegtl::seq<
       cjump_str,
@@ -260,7 +278,7 @@ namespace L1 {
       seps,
       t,
       seps,
-      label
+      Label
     >{};
 
   struct Instruction_save_cmp:
@@ -279,12 +297,12 @@ namespace L1 {
     pegtl::seq<
       goto_str,
       seps,
-      label
+      Label
     >{};
 
-  struct ret_label_rule:
+  struct Instruction_label:
     pegtl::seq<
-      label
+      Label
     >{};
 
   struct Instruction_call:
@@ -347,7 +365,7 @@ namespace L1 {
       pegtl::seq< pegtl::at<Instruction_call_input>, Instruction_call_input>,
       pegtl::seq< pegtl::at<Instruction_call_allocate>, Instruction_call_allocate>,
       pegtl::seq< pegtl::at<Instruction_call_tensorError>, Instruction_call_tensorError>,
-      pegtl::seq< pegtl::at<ret_label_rule>, ret_label_rule>
+      pegtl::seq< pegtl::at<Instruction_label>, Instruction_label>
     > { };
 
   struct Instructions_rule:
@@ -403,8 +421,8 @@ namespace L1 {
   /* 
    * Actions attached to grammar rules.
    */
-  template< typename Rule >
-  struct action : pegtl::nothing< Rule > {};
+  template<typename Rule>
+  struct action : pegtl::nothing<Rule> {};
 
   template<> struct action <function_name_rule> {
     template<typename Input>
@@ -419,11 +437,30 @@ namespace L1 {
     }
   };
 
-  template<> struct action <Number> {
+  template<> struct action <argument_number> {
     template<typename Input>
 	  static void apply(const Input & in, Program & p) {
       L1::Function* currentF = p.functions.back();
       currentF->arguments = std::stoll(in.string());
+    }
+  };
+
+  template<> struct action <local_number> {
+    template<typename Input>
+	  static void apply(const Input & in, Program & p) {
+      L1::Function* currentF = p.functions.back();
+      currentF->locals = std::stoll(in.string());
+    }
+  };
+
+  template<> struct action <Number> {
+    template<typename Input>
+	  static void apply(const Input & in, Program & p) {
+      L1::Function* currentF = p.functions.back();
+
+      L1::Number* n = new L1::Number(std::stoll(in.string()));
+
+      parsed_items.push_back(n);
     }
   };
 
@@ -457,11 +494,20 @@ namespace L1 {
     }
   };
 
+  template<> struct action <MemoryLocation> {
+    template<typename Input>
+    static void apply(const Input & in, Program & p) {
+      Architecture::OP opID = Architecture::OP_from_string(in.string());
+      L1::Operation* op = new L1::Operation(opID);
+      parsed_items.push_back(op);
+    }
+  };
+
   template<> struct action <Instruction_return> {
     template<typename Input>
 	  static void apply(const Input & in, Program & p) {
       L1::Function* currentF = p.functions.back();
-      L1::Number* i = new Instruction_ret();
+      L1::Number* i = new L1::Instruction_ret();
       currentF->instructions.push_back(i);
     }
   };
@@ -476,7 +522,7 @@ namespace L1 {
       auto dst = parsed_items.back();
       parsed_items.pop_back();
 
-      L1::Instruction_assignment* i = new Instruction_assignment(dst, src);
+      L1::Instruction_assignment* i = new L1::Instruction_assignment(dst, src);
 
       currentF->instructions.push_back(i);
     }
@@ -493,7 +539,9 @@ namespace L1 {
       L1::Register* reg = parsed_items.back();
       parsed_items.pop_back();
 
-      L1::Instruction_operation* i = new Instruction_operation(reg, op, NULL);
+      L1::NullItem* emptyThing;
+
+      L1::Instruction_operation* i = new Instruction_operation(reg, op, emptyThing, emptyThing, emptyThing);
 
       currentF->instructions.push_back(i);
     }
@@ -512,7 +560,30 @@ namespace L1 {
       auto right = parsed_items.back();
       parsed_items.pop_back();
 
-      L1::Instruction_operation* i = new Instruction_operation(left, op, right);
+      L1::Instruction_operation* i = new Instruction_operation(left, op, right, emptyThing, emptyThing);
+
+      currentF->instructions.push_back(i);
+    }
+  };
+
+  // lea (3-ish items)
+  template<> struct action <Instruction_operation3> {
+    template<typename Input>
+	  static void apply(const Input & in, Program & p) {
+      L1::Function* currentF = p.functions.back();
+
+      L1::Number* factor = parsed_items.back();
+      parsed_items.pop_back();
+      L1::Register* second = parsed_items.back();
+      parsed_items.pop_back();
+      L1::Register* first = parsed_items.back();
+      parsed_items.pop_back();
+      L1::Operation* op = parsed_items.back();
+      parsed_items.pop_back();
+      L1::Register* dst = parsed_items.back();
+      parsed_items.pop_back();
+
+      L1::Instruction_operation* i = new Instruction_operation(dst, op, first, second, factor);
 
       currentF->instructions.push_back(i);
     }
@@ -558,6 +629,20 @@ namespace L1 {
     }
   };
 
+  template<> struct action <Instruction_label> {
+    template<typename Input>
+    static void apply(const Input & in, Program & p){
+      L1::Function* currentF = p.functions.back();
+
+      L1::Label* label = parsed_items.back();
+      parsed_items.pop_back();
+
+      L1::Instruction_label* i = new Instruction_label(label);
+
+      currentF->instructions.push_back(i);
+    }
+  };
+
   template<> struct action <Instruction_goto> {
     template<typename Input>
     static void apply(const Input & in, Program & p){
@@ -569,13 +654,6 @@ namespace L1 {
       L1::Instruction_goto* i = new Instruction_goto(label);
 
       currentF->instructions.push_back(i);
-    }
-  };
-
-  template<> struct action <ret_label_rule> {
-    template<typename Input>
-	  static void apply(const Input & in, Program & p){
-      parsed_items.pop_back();
     }
   };
 

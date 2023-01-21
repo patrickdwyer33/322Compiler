@@ -10,6 +10,11 @@ namespace L1 {
       virtual std::string to_string() = 0;
   };
 
+  class NullItem : public Item {
+    public:
+      std::string to_string() const override;
+  }
+
   class Number : public Item {
     public:
       Number(int64_t value);
@@ -18,7 +23,7 @@ namespace L1 {
       boolean operator == (const Number &other) const;
     private:
       int64_t value;
-  }
+  };
 
   class Label : public Item {
     public:
@@ -28,7 +33,7 @@ namespace L1 {
       boolean operator == (const Label &other) const;
     private:
       std::string value;
-  }
+  };
 
   class Register : public Item {
     public:
@@ -59,7 +64,7 @@ namespace L1 {
       boolean operator == (const Operation &other) const;
     private:
       Architecture::OP OP;
-  }
+  };
 
   class CmpOperation : public Item {
     public:
@@ -69,7 +74,7 @@ namespace L1 {
       boolean operator == (const CmpOperation &other) const;
     private:
       Architecture::CompareOP cmpOP;
-  }
+  };
 
   /*
    * Instruction interface.
@@ -101,14 +106,16 @@ namespace L1 {
 
   class Instruction_operation : public Instruction{
     public:
-      Instruction_operation(Item* left, Architecture::OP op, Item* right);
+      Instruction_operation(Item* left, Architecture::OP op, Item* right, Item* lea_reg, Item* factor);
       std::string to_string() override const;
       void accept(Visitor* v) const;
     private:
       Architecture::OP OP;
       Item* left;
       Item* right;
-  }
+      Item* lea_reg;
+      Item* factor;
+  };
 
   class Instruction_cjump : public Instruction{
     public:
@@ -120,7 +127,7 @@ namespace L1 {
       Item* left;
       Item* right;
       Item* label;
-  }
+  };
 
   class Instruction_save_cmp : public Instruction{
     public:
@@ -132,7 +139,16 @@ namespace L1 {
       Architecture::CompareOP OP;
       Item* left;
       Item* right;
-  }
+  };
+
+  class Instruction_label : public Instruction{
+    public:
+      Instruction_label(Label* label);
+      std::string to_string() override const;
+      void accept(Visitor* v) const;
+    private:
+      Label* Label;
+  };
 
   class Instruction_goto : public Instruction{
     public:
@@ -141,7 +157,7 @@ namespace L1 {
       void accept(Visitor* v) const;
     private:
       Label* Label;
-  }
+  };
 
   class Instruction_call : public Instruction {
     public:
@@ -151,28 +167,28 @@ namespace L1 {
     private:
       Item* name;
       Number* Arg;
-  }
+  };
 
   class Instruction_call_print : public Instruction {
     public:
       Instruction_call_print();
       std::string to_string() override const;
       void accept(Visitor* v) const;
-  }
+  };
 
   class Instruction_call_input : public Instruction {
     public:
       Instruction_call_input();
       std::string to_string() override const;
       void accept(Visitor* v) const;
-  }
+  };
 
   class Instruction_call_allocate : public Instruction {
     public:
       Instruction_call_allocate();
       std::string to_string() override const;
       void accept(Visitor* v) const;
-  }
+  };
 
   class Instruction_call_tensorError : public Instruction {
     public:
@@ -181,7 +197,7 @@ namespace L1 {
       void accept(Visitor* v) const;
     private:
       Number* arg;
-  }
+  };
 
   class Function {
     public:
@@ -205,6 +221,7 @@ namespace L1 {
       virtual void visit(const Instruction_assignment* i) = 0;
       virtual void visit(const Instruction_operation* i) = 0;
       virtual void visit(const Instruction_cjump* i) = 0;
+      virtual void visit(const Instruction_label* i) = 0;
       virtual void visit(const Instruction_goto* i) = 0;
       virtual void visit(const Instruction_call* i) = 0;
       virtual void visit(const Instruction_call_print* i) const = 0;
@@ -213,6 +230,6 @@ namespace L1 {
       virtual void visit(const Instruction_call_tensorError* i) const = 0;
       virtual void visit(const Function* fn) = 0;
       virtual void visit(const Program* p) = 0;
-  }
+  };
 
 }

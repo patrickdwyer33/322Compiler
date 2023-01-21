@@ -92,7 +92,7 @@ namespace Architecture {
                 *ret_op = OP::and_equals;
                 break;
             case "@":
-                *ret_op = OP::ampersand;
+                *ret_op = OP::lea;
                 break;
             case "<<=":
                 *ret_op = OP::shift_left;
