@@ -36,96 +36,39 @@ using namespace pegtl;
 
 namespace L1 {
 
-  /* 
-   * Tokens parsed
-   */ 
   std::vector<Item *> parsed_items;
 
-  /* 
-   * Grammar rules from now on.
-   */
   struct name:
     pegtl::seq<
       pegtl::plus< 
         pegtl::sor<
           pegtl::alpha,
-          pegtl::one< '_' >
+          pegtl::one<'_'>
         >
       >,
       pegtl::star<
         pegtl::sor<
           pegtl::alpha,
-          pegtl::one< '_' >,
+          pegtl::one<'_'>,
           pegtl::digit
         >
       >
     > {};
 
-  struct label:
-    pegtl::seq<
-      pegtl::one<':'>,
-      name
-    > {};
-
-  struct number:
-    pegtl::seq<
-      pegtl::opt<
-        pegtl::sor<
-          pegtl::one< '-' >,
-          pegtl::one< '+' >
-        >
-      >,
-      pegtl::plus< 
-        pegtl::digit
-      >
-    >{};
-
   struct argument_number:
-    number {};
+    Number {};
 
   struct local_number:
-    number {} ;
+    Number {} ;
+
+  struct call_arg_number:
+    Number {};
 
   struct comment: 
     pegtl::disable< 
       TAOCPP_PEGTL_STRING( "//" ), 
       pegtl::until< pegtl::eolf > 
     > {};
-
-  struct Register:
-    pegtl::sor<
-      register_rdi_rule,
-      register_rax_rule,
-      register_rsi_rule,
-      register_rdx_rule,
-      register_rcx_rule,
-      register_r8_rule,
-      register_r9_rule,
-      register_rbx_rule,
-      register_rbp_rule,
-      register_r10_rule,
-      register_r11_rule,
-      register_r12_rule,
-      register_r13_rule,
-      register_r14_rule,
-      register_r15_rule,
-      stack_pointer_rule,
-    >{};
-
-  struct mem_access:
-    pegtl::seq<
-      TAOCPP_PEGTL_STRING("mem"),
-      seps,
-      x,
-      seps,
-      number
-    >{};
-
-  struct x:
-    pegtl::sor<
-      Register,
-      stack_pointer_rule
-    >{};
 
   struct u:
     pegtl::sor<
@@ -135,14 +78,26 @@ namespace L1 {
 
   struct t:
     pegtl::sor<
-      x,
-      number
+      Register,
+      Number
+    >{};
+  
+  struct Value:
+    pegtl::sor<
+      Location,
+      Number
     >{};
 
   struct s:
     pegtl::sor<
       label,
       t
+    >{};
+
+  struct Location:
+    pegtl::sor<
+      Register,
+      MemoryLocation
     >{};
 
   struct seps: 
@@ -153,103 +108,60 @@ namespace L1 {
       > 
     > {};
 
-  struct plus_minus:
-    pegtl::seq<
-      pegtl::sor<
+  struct one_item_op:
+    pegtl::sor<
+      pegtl::seq<
         pegtl::one<'+'>,
+        pegtl::one<'+'>
+      >,
+      pegtl::seq<
+        pegtl::one<'-'>,
         pegtl::one<'-'>
-        >,
-      pegtl::one<'='>
+      >
     >{};
 
-  struct multiply_and:
-    pegtl::seq<
-      pegtl::sor<
-        pegtl::one<'*'>,
-        pegtl::one<'&'>
-        >,
-      pegtl::one<'='>
-    >{};
-
-  struct aop:
+  struct two_item_op:
     pegtl::seq<
       pegtl::sor<
         pegtl::one<'+'>,
         pegtl::one<'-'>,
         pegtl::one<'*'>,
-        pegtl::one<'&'>
+        pegtl::one<'&'>,
+        pegtl::seq<
+          pegtl::one<'<'>,
+          pegtl::one<'<'>
         >,
+        pegtl::seq<
+          pegtl::one<'>'>,
+          pegtl::one<'>'>
+        >
+      >
       pegtl::one<'='>
     >{};
 
   struct cmp:
     pegtl::sor<
-      pegtl::one<'<'>,
-      pegtl::one<'='>,
       pegtl::seq<
         pegtl::one<'<'>,
         pegtl::one<'='>
       >
-    >{};
-
-  struct sop:
-    pegtl::seq<
-      pegtl::sor<
-        pegtl::seq<
-          pegtl::one<'<'>
-          pegtl::one<'<'>
-        >,
-        pegtl::seq<
-          pegtl::one<'>'>
-          pegtl::one<'>'>
-        >
-      >,
+      pegtl::one<'<'>,
       pegtl::one<'='>
     >{};
 
-  struct shifter:
-    pegtl::sor<
-      register_rcx_rule,
-      number
-    >{};
-
-  /* 
-   * Keywords.
-   */
-  struct str_return : TAOCPP_PEGTL_STRING( "return" ) {};
   struct str_arrow :
     pegtl::seq<
       pegtl::one<'<'>,
       pegtl::one<'-'>
     >{};
-  struct str_rdi : TAOCPP_PEGTL_STRING( "rdi" ) {};
-  struct str_rax : TAOCPP_PEGTL_STRING( "rax" ) {};
-  struct str_rsi : TAOCPP_PEGTL_STRING( "rsi" ) {};
-  struct str_rdx : TAOCPP_PEGTL_STRING( "rdx" ) {};
-  struct str_rcx : TAOCPP_PEGTL_STRING( "rcx" ) {};
-  struct str_r8 : TAOCPP_PEGTL_STRING( "r8" ) {};
-  struct str_r9 : TAOCPP_PEGTL_STRING( "r9" ) {};
-  struct str_rbx : TAOCPP_PEGTL_STRING( "rbx" ) {};
-  struct str_rbp : TAOCPP_PEGTL_STRING( "rbp" ) {};
-  struct str_r10 : TAOCPP_PEGTL_STRING( "r10" ) {};
-  struct str_r11 : TAOCPP_PEGTL_STRING( "r11" ) {};
-  struct str_r12 : TAOCPP_PEGTL_STRING( "r12" ) {};
-  struct str_r13 : TAOCPP_PEGTL_STRING( "r13" ) {};
-  struct str_r14 : TAOCPP_PEGTL_STRING( "r14" ) {};
-  struct str_r15 : TAOCPP_PEGTL_STRING( "r15" ) {};
-  struct str_rsp : TAOCPP_PEGTL_STRING( "rsp" ) {};
 
-  struct cjump_str: TAOCPP_PEGTL_STRING( "cjump" ) {};
-  struct goto_str: TAOCPP_PEGTL_STRING( "goto" ) {};
-  struct call_str: TAOCPP_PEGTL_STRING( "call" ) {};
-  struct print_str: TAOCPP_PEGTL_STRING( "print" ) {};
-  struct input_str: TAOCPP_PEGTL_STRING( "input" ) {};
-  struct allocate_str: TAOCPP_PEGTL_STRING( "allocate" ) {};
-  struct tensorError_str: TAOCPP_PEGTL_STRING( "tensor-error" ) {};
-
-  /* 
-   * Rules.
-   */
+  struct cjump_str: TAOCPP_PEGTL_STRING("cjump") {};
+  struct goto_str: TAOCPP_PEGTL_STRING("goto") {};
+  struct call_str: TAOCPP_PEGTL_STRING("call") {};
+  struct print_str: TAOCPP_PEGTL_STRING("print") {};
+  struct input_str: TAOCPP_PEGTL_STRING("input") {};
+  struct allocate_str: TAOCPP_PEGTL_STRING("allocate") {};
+  struct tensorError_str: TAOCPP_PEGTL_STRING("tensor-error") {};
 
   struct function_name_rule:
     pegtl::seq<
@@ -257,55 +169,101 @@ namespace L1 {
       name
     > {};
 
-  struct register_rdi_rule:
-    str_rdi {};
+  struct Number:
+    pegtl::seq<
+      pegtl::opt<
+        pegtl::sor<
+          pegtl::one<'-'>,
+          pegtl::one<'+'>
+        >
+      >,
+      pegtl::plus< 
+        pegtl::digit
+      >
+    >{};
 
-  struct register_rax_rule:
-    str_rax {};
+  struct Label:
+    pegtl::sor<
+      pegtl::seq<
+        pegtl::one<':'>,
+        name
+      >,
+      pegtl::seq<
+        pegtl::one<'@'>,
+        name
+      >
+    > {};
 
-  struct register_rsi_rule:
-    str_rsi {};
-  
-  struct register_rdx_rule:
-    str_rdx {};
+  struct Register:
+    pegtl::sor<
+      TAOCPP_PEGTL_STRING("rdi"),
+      TAOCPP_PEGTL_STRING("rax"),
+      TAOCPP_PEGTL_STRING("rsi"),
+      TAOCPP_PEGTL_STRING("rdx"),
+      TAOCPP_PEGTL_STRING("rcx"),
+      TAOCPP_PEGTL_STRING("r8"),
+      TAOCPP_PEGTL_STRING("r9"),
+      TAOCPP_PEGTL_STRING("rbx"),
+      TAOCPP_PEGTL_STRING("rbp"),
+      TAOCPP_PEGTL_STRING("r10"),
+      TAOCPP_PEGTL_STRING("r11"),
+      TAOCPP_PEGTL_STRING("r12"),
+      TAOCPP_PEGTL_STRING("r13"),
+      TAOCPP_PEGTL_STRING("r14"),
+      TAOCPP_PEGTL_STRING("r15"),
+      TAOCPP_PEGTL_STRING("rsp"),
+    >{};
 
-  struct register_rcx_rule:
-    str_rcx {};
+  struct MemoryLocation:
+    pegtl::seq<
+      TAOCPP_PEGTL_STRING("mem"),
+      seps,
+      Register,
+      seps,
+      number
+    >{};
 
-  struct register_r8_rule:
-    str_r8 {};
+  struct Instruction_return : TAOCPP_PEGTL_STRING("return") {};
 
-  struct register_r9_rule:
-    str_r9 {};
+  struct Instruction_assignment:
+    pegtl::seq<
+      Location,
+      seps,
+      str_arrow,
+      seps,
+      s
+    >{};
 
-  struct register_rbx_rule:
-    str_rbx {};
+  struct Instruction_operation1:
+    pegtl::seq<
+      Register,
+      seps,
+      one_item_op
+    >{};
 
-  struct register_rbp_rule:
-    str_rbp {};
+  struct Instruction_operation2:
+    pegtl::seq<
+      Location,
+      seps,
+      two_item_op,
+      seps,
+      Value
+    >{};
 
-  struct register_r10_rule:
-    str_r9 {};
-  
-  struct register_r11_rule:
-    str_r9 {};
+  struct Instruction_cjump:
+    pegtl::seq<
+      cjump_str,
+      seps,
+      t,
+      seps,
+      cmp,
+      seps,
+      t,
+      seps,
+      label
+    >{};
 
-  struct register_r12_rule:
-    str_r9 {};
-
-  struct register_r13_rule:
-    str_r9 {};
-
-  struct register_r14_rule:
-    str_r9 {};
-
-  struct register_r15_rule:
-    str_r9 {};
-
-  struct stack_pointer_rule:
-    str_rsp {};
-
-  struct save_cmp_rule:
+  struct Instruction_save_cmp:
     pegtl::seq<
       Register,
       seps,
@@ -317,19 +275,7 @@ namespace L1 {
       t
     >{};
 
-  struct cjump_rule:
-    pegtl::seq<
-      cjump_str,
-      seps,
-      t,
-      seps,
-      cmp,
-      seps,
-      t,
-      label
-    >{};
-
-  struct goto_rule:
+  struct Instruction_goto:
     pegtl::seq<
       goto_str,
       seps,
@@ -341,196 +287,66 @@ namespace L1 {
       label
     >{};
 
-  struct call_arg_number:
-    number;
-
-  struct call_fn_rule:
+  struct Instruction_call:
     pegtl::seq<
       call_str,
       seps,
       u,
       seps,
-      call_arg_number
+      Number
     >{};
 
-  struct call_print_rule:
+  struct Instruction_call_print:
     pegtl::seq<
       call_str,
       seps,
       print_str,
       seps,
-      call_arg_number
+      Number
     >{};
 
-  struct call_input_rule:
+  struct Instruction_call_input:
     pegtl::seq<
       call_str,
       seps,
       input_str,
       seps,
-      call_arg_number
+      Number
     >{};
 
-  struct call_allocate_rule:
+  struct Instruction_call_allocate:
     pegtl::seq<
       call_str,
       seps,
       allocate_str,
       seps,
-      call_arg_number
+      Number
     >{};
 
-  struct call_tensorError_rule:
+  struct Instruction_call_tensorError:
     pegtl::seq<
       call_str,
       seps,
       tensorError_str,
       seps,
-      call_arg_number
-    >{};
-
-  struct plus_plus_or_minus_minus_rule:
-    pegtl::seq<
-      Register,
-      seps,
-      pegtl::sor<
-        pegtl::seq<
-          pegtl::one<'+'>,
-          pegtl::one<'+'>
-        >,
-        pegtl::seq<
-          pegtl::one<'-'>,
-          pegtl::one<'-'>
-        >
-      >
-    >{};
-
-  struct ampersand_op_rule:
-    pegtl::seq<
-      Register,
-      seps,
-      pegtl::one<'@'>,
-      seps,
-      Register,
-      seps,
-      Register,
-      seps,
-      number
-    >{};
-
-  struct aop_rule:
-    pegtl::sor<
-      pegtl::seq<
-        Register,
-        seps,
-        aop,
-        seps,
-        t
-      >,
-      pegtl::seq<
-        mem_access,
-        seps,
-        plus_minus,
-        seps,
-        t
-      >,
-      pegtl::seq<
-        Register,
-        seps,
-        plus_minus,
-        seps,
-        mem_access
-      >
-    >{};
-
-  struct sop_rule:
-    pegtl::seq<
-      register_rule,
-      seps,
-      sop,
-      seps,
-      shifter
-    >{};
-
-  struct Instruction_return_rule:
-    pegtl::seq<
-      str_return
-    > { };
-
-  struct Normal_instruction_assignment_rule:
-    pegtl::seq<
-      Register,
-      seps,
-      str_arrow,
-      seps,
-      s
-    >{};
-
-    struct Mem_read_instruction_assignment_rule:
-      pegtl::seq<
-        Regsiter,
-        seps,
-        str_arrow,
-        seps,
-        mem_access
-      >{};
-
-    struct Mem_write_instruction_assignment_rule:
-      pegtl::seq<
-        mem_access,
-        seps,
-        str_arrow,
-        seps,
-        s
-      >{};
-
-  struct Instruction_assignment_rule:
-    pegtl::sor<
-      Normal_instruction_assignment_rule,
-      Mem_read_instruction_assignment_rule,
-      Mem_write_instruction_assignment_rule
-    > {};
-
-  struct operation_rule:
-    pegtl::sor<
-      sop_rule,
-      aop_rule,
-      ampersand_op_rule,
-      plus_plus_or_minus_minus_rule
-    >{};
-
-  struct call:
-    pegtl::sor<
-      call_fn,
-      call_print,
-      call_input,
-      call_allocate,
-      call_tensorError
-    >{};
-
-  struct call_rule:
-    pegtl::seq<
-      TAOCPP_PEGTL_STRING("mem"),
-      seps,
-      stack_pointer_rule,
-      seps,
-      TAOCPP_PEGTL_STRING("-8"),
-      seps,
-      call,
-      seps,
-      ret_label_rule
+      Number
     >{};
 
   struct Instruction_rule:
     pegtl::sor<
-      pegtl::seq< pegtl::at<Instruction_return_rule>, Instruction_return_rule>,
-      pegtl::seq< pegtl::at<Instruction_assignment_rule>, Instruction_assignment_rule>,
-      pegtl::seq< pegtl::at<Instruction_assignment_rule>, Instruction_assignment_rule>,
-      pegtl::seq< pegtl::at<operation_rule>, operation_rule>,
-      pegtl::seq< pegtl::at<call_rule>, call_rule>,
-      pegtl::seq< pegtl::at<save_cmp_rule>, save_cmp_rule>,
-      pegtl::seq< pegtl::at<cjump_rule>, cjump_rule>
-      pegtl::seq< pegtl::at<goto_rule>, goto_rule>,
+      pegtl::seq< pegtl::at<Instruction_return>, Instruction_return>,
+      pegtl::seq< pegtl::at<Instruction_save_cmp>, Instruction_save_cmp>,
+      pegtl::seq< pegtl::at<Instruction_assignment>, Instruction_assignment>,
+      pegtl::seq< pegtl::at<Instruction_operation1>, Instruction_operation1>,
+      pegtl::seq< pegtl::at<Instruction_operation2>, Instruction_operation2>,
+      pegtl::seq< pegtl::at<Instruction_cjump>, Instruction_cjump>,
+      pegtl::seq< pegtl::at<Instruction_save_cmp>, Instruction_save_cmp>
+      pegtl::seq< pegtl::at<Instruction_goto>, Instruction_goto>,
+      pegtl::seq< pegtl::at<Instruction_call>, Instruction_call>,
+      pegtl::seq< pegtl::at<Instruction_call_print>, Instruction_call_print>,
+      pegtl::seq< pegtl::at<Instruction_call_input>, Instruction_call_input>,
+      pegtl::seq< pegtl::at<Instruction_call_allocate>, Instruction_call_allocate>,
+      pegtl::seq< pegtl::at<Instruction_call_tensorError>, Instruction_call_tensorError>,
       pegtl::seq< pegtl::at<ret_label_rule>, ret_label_rule>
     > { };
 
@@ -590,286 +406,244 @@ namespace L1 {
   template< typename Rule >
   struct action : pegtl::nothing< Rule > {};
 
-  template<> struct action < function_name_rule > {
-    template< typename Input >
-	  static void apply( const Input & in, Program & p){
+  template<> struct action <function_name_rule> {
+    template<typename Input>
+	  static void apply(const Input & in, Program & p) {
       if (p.entryPointLabel.empty()){
         p.entryPointLabel = in.string();
       } else {
-        auto newF = new Function();
+        L1::Function* newF = new Function();
         newF->name = in.string();
         p.functions.push_back(newF);
       }
     }
   };
 
-  template<> struct action < call_arg_number > {
-    template< typename Input >
-	  static void apply( const Input & in, Program & p){
-      auto num = Number(stoi(in.string()))
-      parsed_items.push_back(num);
-    }
-  };
-
-  template<> struct action < call_fn_rule > {
-    template< typename Input >
-	  static void apply( const Input & in, Program & p){
-      auto num_args = parsed_items.back();
-      parsed_items.pop_back();
-      auto fn_name = parsed_items.back();
-      parsed_items.pop_back();
-      auto newInstruction = new Instruction_call(fn_name, num_args)
-      currentF->instructions.push_back(newInstruction)
-    }
-  };
-
-  template<> struct action < call_print_rule > {
-    template< typename Input >
-	  static void apply( const Input & in, Program & p){
-      auto num_args = parsed_items.back();
-      parsed_items.pop_back();
-      auto newInstruction = new Instruction_call(LibraryCall::print)
-      currentF->instructions.push_back(newInstruction)
-    }
-  };
-
-  template<> struct action < call_input_rule > {
-    template< typename Input >
-	  static void apply( const Input & in, Program & p){
-      auto num_args = parsed_items.back();
-      parsed_items.pop_back();
-      auto newInstruction = new Instruction_call(LibraryCall::input)
-      currentF->instructions.push_back(newInstruction)
-    }
-  };
-
-  template<> struct action < call_allocate_rule > {
-    template< typename Input >
-	  static void apply( const Input & in, Program & p){
-      auto num_args = parsed_items.back();
-      parsed_items.pop_back();
-      auto newInstruction = new Instruction_call(LibraryCall::allocate)
-      currentF->instructions.push_back(newInstruction)
-    }
-  };
-
-  template<> struct action < call_tensorError_rule > {
-    template< typename Input >
-	  static void apply( const Input & in, Program & p){
-      auto arg = parsed_items.back();
-      parsed_items.pop_back();
-      auto newInstruction = new Instruction_call(LibraryCall::tensor_error, arg)
-      currentF->instructions.push_back(newInstruction)
-    }
-  };
-
-  template<> struct action < argument_number > {
-    template< typename Input >
-	  static void apply( const Input & in, Program & p){
-      auto currentF = p.functions.back();
+  template<> struct action <Number> {
+    template<typename Input>
+	  static void apply(const Input & in, Program & p) {
+      L1::Function* currentF = p.functions.back();
       currentF->arguments = std::stoll(in.string());
     }
   };
 
-  template<> struct action < local_number > {
-    template< typename Input >
-	  static void apply( const Input & in, Program & p){
-      auto currentF = p.functions.back();
-      currentF->locals = std::stoll(in.string());
+  template<> struct action <Label> {
+    template<typename Input>
+    static void apply(const Input & in, Program & p) {
+      L1::Label* l = new L1::Label(in.string());
+      parsed_items.push_back(l);
     }
   };
 
-  template<> struct action < str_return > {
+  template<> struct action <Register> {
     template< typename Input >
-	  static void apply( const Input & in, Program & p){
-      auto currentF = p.functions.back();
-      auto i = new Instruction_ret();
+    static void apply( const Input & in, Program & p) {
+      std::string s = in.string();
+      Architecture::RegisterID reg_id = Architecture::reg_from_string(s);
+      L1::Register* r = new L1::Register(reg_id);
+      parsed_items.push_back(r);
+    }
+  };
+
+  template<> struct action <MemoryLocation> {
+    template<typename Input>
+    static void apply(const Input & in, Program & p) {
+      L1::Number* n = parsed_items.back();
+      parsed_items.pop_back();
+      L1::Register* r = parsed_items.back();
+      parsed_items.pop_back();
+      L1::MemoryLocation* mem = new L1::MemoryLocation(r, n);
+      parsed_items.push_back(mem);
+    }
+  };
+
+  template<> struct action <Instruction_return> {
+    template<typename Input>
+	  static void apply(const Input & in, Program & p) {
+      L1::Function* currentF = p.functions.back();
+      L1::Number* i = new Instruction_ret();
       currentF->instructions.push_back(i);
     }
   };
 
-  template<> struct action < register_rdi_rule > {
-    template< typename Input >
-    static void apply( const Input & in, Program & p){
-      auto r = new Register(RegisterID::rdi);
-      parsed_items.push_back(r);
-    }
-  };
+  template<> struct action <Instruction_assignment> {
+    template<typename Input>
+	  static void apply(const Input & in, Program & p) {
+      L1::Function* currentF = p.functions.back();
 
-  template<> struct action < register_rax_rule > {
-    template< typename Input >
-    static void apply( const Input & in, Program & p){
-      auto r = new Register(RegisterID::rax);
-      parsed_items.push_back(r);
-    }
-  };
-
-  template<> struct action < register_rsi_rule > {
-    template< typename Input >
-    static void apply( const Input & in, Program & p){
-      auto r = new Register(RegisterID::rsi);
-      parsed_items.push_back(r);
-    }
-  };
-
-  template<> struct action < register_rdx_rule > {
-    template< typename Input >
-    static void apply( const Input & in, Program & p){
-      auto r = new Register(RegisterID::rdx);
-      parsed_items.push_back(r);
-    }
-  };
-
-  template<> struct action < register_r8_rule > {
-    template< typename Input >
-    static void apply( const Input & in, Program & p){
-      auto r = new Register(RegisterID::r8);
-      parsed_items.push_back(r);
-    }
-  };
-
-  template<> struct action < register_r9_rule > {
-    template< typename Input >
-    static void apply( const Input & in, Program & p){
-      auto r = new Register(RegisterID::r9);
-      parsed_items.push_back(r);
-    }
-  };
-
-  template<> struct action < register_rbx_rule > {
-    template< typename Input >
-    static void apply( const Input & in, Program & p){
-      auto r = new Register(RegisterID::rbx);
-      parsed_items.push_back(r);
-    }
-  };
-
-  template<> struct action < register_rbp_rule > {
-    template< typename Input >
-    static void apply( const Input & in, Program & p){
-      auto r = new Register(RegisterID::rbp);
-      parsed_items.push_back(r);
-    }
-  };
-
-  template<> struct action < register_r10_rule > {
-    template< typename Input >
-    static void apply( const Input & in, Program & p){
-      auto r = new Register(RegisterID::r10);
-      parsed_items.push_back(r);
-    }
-  };
-
-  template<> struct action < register_r11_rule > {
-    template< typename Input >
-    static void apply( const Input & in, Program & p){
-      auto r = new Register(RegisterID::r11);
-      parsed_items.push_back(r);
-    }
-  };
-
-  template<> struct action < register_r12_rule > {
-    template< typename Input >
-    static void apply( const Input & in, Program & p){
-      auto r = new Register(RegisterID::r12);
-      parsed_items.push_back(r);
-    }
-  };
-
-  template<> struct action < register_r13_rule > {
-    template< typename Input >
-    static void apply( const Input & in, Program & p){
-      auto r = new Register(RegisterID::r13);
-      parsed_items.push_back(r);
-    }
-  };
-
-  template<> struct action < register_r14_rule > {
-    template< typename Input >
-    static void apply( const Input & in, Program & p){
-      auto r = new Register(RegisterID::r14);
-      parsed_items.push_back(r);
-    }
-  };
-
-  template<> struct action < register_r15_rule > {
-    template< typename Input >
-    static void apply( const Input & in, Program & p){
-      auto r = new Register(RegisterID::r15);
-      parsed_items.push_back(r);
-    }
-  };
-
-  template<> struct action < stack_pointer_rule > {
-    template< typename Input >
-    static void apply( const Input & in, Program & p){
-      auto r = new Register(RegisterID::rsp);
-      parsed_items.push_back(r);
-    }
-  };
-
-  template<> struct action < save_cmp_rule > {
-    template< typename Input >
-    static void apply( const Input & in, Program & p){
-      auto r = parsed_items.back();
-      parsed_items.pop_back();
-      auto op = parsed_items.back();
-      parsed_items.pop_back();
-      auto newInstruction = new Instruction_save_cmp(r, op);
-      auto currentF = p.functions.back();
-      currentF->instructions.push_back(i);
-    }
-  };
-
-  template<> struct action < cjump_rule > {
-    template< typename Input >
-    static void apply( const Input & in, Program & p){
-      auto loc = parsed_items.back();
-      parsed_items.pop_back();
-      auto op = parsed_items.back();
-      parsed_items.pop_back();
-      auto newInstruction = new Instruction_cjump(op, loc);
-      auto currentF = p.functions.back();
-      currentF->instructions.push_back(i);
-    }
-  };
-
-  template<> struct action < goto_rule > {
-    template< typename Input >
-    static void apply( const Input & in, Program & p){
-      auto loc = parsed_items.back();
-      parsed_items.pop_back();
-      auto newInstruction = new Instruction_goto(loc);
-      auto currentF = p.functions.back();
-      currentF->instructions.push_back(i);
-    }
-  };
-
-  template<> struct action < Instruction_assignment_rule > {
-    template< typename Input >
-	  static void apply( const Input & in, Program & p){
-
-      /* 
-       * Fetch the current function.
-       */ 
-      auto currentF = p.functions.back();
-
-      /*
-       * Fetch the last two tokens parsed.
-       */
       auto src = parsed_items.back();
       parsed_items.pop_back();
       auto dst = parsed_items.back();
       parsed_items.pop_back();
 
-      /* 
-       * Create the instruction.
-       */ 
-      auto i = new Instruction_assignment(dst, src);
+      L1::Instruction_assignment* i = new Instruction_assignment(dst, src);
 
-      /* 
-       * Add the just-created instruction to the current function.
-       */ 
+      currentF->instructions.push_back(i);
+    }
+  };
+
+  // operation with 1 item
+  template<> struct action <Instruction_operation1> {
+    template<typename Input>
+	  static void apply(const Input & in, Program & p) {
+      L1::Function* currentF = p.functions.back();
+
+      L1::Operation* op = parsed_items.back();
+      parsed_items.pop_back();
+      L1::Register* reg = parsed_items.back();
+      parsed_items.pop_back();
+
+      L1::Instruction_operation* i = new Instruction_operation(reg, op, NULL);
+
+      currentF->instructions.push_back(i);
+    }
+  };
+
+  // operation with 2 items
+  template<> struct action <Instruction_operation2> {
+    template<typename Input>
+	  static void apply(const Input & in, Program & p) {
+      L1::Function* currentF = p.functions.back();
+
+      auto left = parsed_items.back();
+      parsed_items.pop_back();
+      L1::Operation* op = parsed_items.back();
+      parsed_items.pop_back();
+      auto right = parsed_items.back();
+      parsed_items.pop_back();
+
+      L1::Instruction_operation* i = new Instruction_operation(left, op, right);
+
+      currentF->instructions.push_back(i);
+    }
+  };
+
+  template<> struct action <Instruction_cjump> {
+    template<typename Input>
+    static void apply(const Input & in, Program & p){
+      L1::Function* currentF = p.functions.back();
+
+      L1::Label* label = parsed_items.back();
+      parsed_items.pop_back();
+      auto right = parsed_items.back();
+      parsed_items.pop_back();
+      L1::CompareOP* cmpOP = parsed_items.back();
+      parsed_items.pop_back();
+      auto left = parsed_items.back();
+      parsed_items.pop_back();
+
+      L1::Instruction_cjump* i = new Instruction_cjump(left, cmpOP, right, label);
+
+      currentF->instructions.push_back(i);
+    }
+  };
+
+  template<> struct action <Instruction_save_cmp> {
+    template<typename Input>
+    static void apply(const Input & in, Program & p){
+      L1::Function* currentF = p.functions.back();
+
+      auto right = parsed_items.back();
+      parsed_items.pop_back();
+      L1::CompareOP* cmpOP = parsed_items.back();
+      parsed_items.pop_back();
+      auto left = parsed_items.back();
+      parsed_items.pop_back();
+      auto dst = parsed_items.back();
+      parsed_items.pop_back();
+
+      L1::Instruction_save_cmp i = new Instruction_save_cmp(dst, left, cmpOP, right);
+
+      currentF->instructions.push_back(i);
+    }
+  };
+
+  template<> struct action <Instruction_goto> {
+    template<typename Input>
+    static void apply(const Input & in, Program & p){
+      L1::Function* currentF = p.functions.back();
+
+      L1::Label* label = parsed_items.back();
+      parsed_items.pop_back();
+
+      L1::Instruction_goto* i = new Instruction_goto(label);
+
+      currentF->instructions.push_back(i);
+    }
+  };
+
+  template<> struct action <ret_label_rule> {
+    template<typename Input>
+	  static void apply(const Input & in, Program & p){
+      parsed_items.pop_back();
+    }
+  };
+
+  template<> struct action <Instruction_call> {
+    template<typename Input>
+	  static void apply(const Input & in, Program & p){
+      L1::Function* currentF = p.functions.back();
+
+      L1::Number* num_args = parsed_items.back();
+      parsed_items.pop_back();
+      auto fn = parsed_items.back();
+      parsed_items.pop_back();
+
+      L1::Instruction_call* i = new Instruction_call(fn, num_args)
+
+      currentF->instructions.push_back(i);
+    }
+  };
+
+  template<> struct action <Instruction_call_print> {
+    template<typename Input>
+	  static void apply(const Input & in, Program & p){
+      L1::Function* currentF = p.functions.back();
+
+      parsed_items.pop_back();
+
+      L1::Instruction_call_print* i = new Instruction_call_print();
+
+      currentF->instructions.push_back(i);
+    }
+  };
+
+  template<> struct action <Instruction_call_input> {
+    template<typename Input>
+	  static void apply(const Input & in, Program & p){
+      L1::Function* currentF = p.functions.back();
+
+      parsed_items.pop_back();
+
+      L1::Instruction_call_input* i = new Instruction_call_input();
+
+      currentF->instructions.push_back(i);
+    }
+  };
+
+  template<> struct action <Instruction_call_allocate> {
+    template< typename Input >
+	  static void apply( const Input & in, Program & p){
+      L1::Function* currentF = p.functions.back();
+
+      parsed_items.pop_back();
+
+      L1::Instruction_call_allocate* i = new Instruction_call_allocate();
+
+      currentF->instructions.push_back(i);
+    }
+  };
+
+  template<> struct action <Instruction_call_tensorError> {
+    template<typename Input>
+	  static void apply(const Input & in, Program & p){
+      L1::Function* currentF = p.functions.back();
+
+      L1::Number* arg = parsed_items.back();
+      parsed_items.pop_back();
+
+      L1::Instruction_call_tensorError* i = new Instruction_call_tensorError(arg);
+
       currentF->instructions.push_back(i);
     }
   };
@@ -879,14 +653,14 @@ namespace L1 {
     /* 
      * Check the grammar for some possible issues.
      */
-    pegtl::analyze< grammar >();
+    pegtl::analyze<grammar>();
 
     /*
      * Parse.
      */
-    file_input< > fileInput(fileName);
+    file_input<> fileInput(fileName);
     Program p;
-    parse< grammar, action >(fileInput, p);
+    parse<grammar, action>(fileInput, p);
 
     return p;
   }

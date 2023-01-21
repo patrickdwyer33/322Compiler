@@ -51,6 +51,26 @@ namespace L1 {
       Number* offset;
   };
 
+  class Operation : public Item {
+    public:
+      Operation(Architecture::OP);
+      std::string to_string() override const;
+      Architecture::OP get() const;
+      boolean operator == (const Operation &other) const;
+    private:
+      Architecture::OP OP;
+  }
+
+  class CmpOperation : public Item {
+    public:
+      CmpOperation(Architecture::CompareOP);
+      std::string to_string() override const;
+      Architecture::CompareOP get() const;
+      boolean operator == (const CmpOperation &other) const;
+    private:
+      Architecture::CompareOP cmpOP;
+  }
+
   /*
    * Instruction interface.
    */
@@ -81,7 +101,7 @@ namespace L1 {
 
   class Instruction_operation : public Instruction{
     public:
-      Instruction_operation(Architecture::OP op, Item* left, Item* right);
+      Instruction_operation(Item* left, Architecture::OP op, Item* right);
       std::string to_string() override const;
       void accept(Visitor* v) const;
     private:
@@ -92,7 +112,7 @@ namespace L1 {
 
   class Instruction_cjump : public Instruction{
     public:
-      Instruction_cjump(Item* left, Architecture::CompareOP, Item* right, Item* label);
+      Instruction_cjump(Item* left, Architecture::CompareOP cmpOP, Item* right, Item* label);
       std::string to_string() override const;
       void accept(Visitor* v) const;
     private:
@@ -104,7 +124,7 @@ namespace L1 {
 
   class Instruction_save_cmp : public Instruction{
     public:
-      Instruction_cjump(Item* dst, Item* left, Architecture::CompareOP, Item* right);
+      Instruction_cjump(Item* dst, Item* left, Architecture::CompareOP cmpOP, Item* right);
       std::string to_string() override const;
       void accept(Visitor* v) const;
     private:
@@ -125,11 +145,11 @@ namespace L1 {
 
   class Instruction_call : public Instruction {
     public:
-      Instruction_call(Label* name, Number* arg);
+      Instruction_call(Item* fn, Number* arg);
       std::string to_string() override const;
       void accept(Visitor* v) const;
     private:
-      Label* name;
+      Item* name;
       Number* Arg;
   }
 
