@@ -2,25 +2,28 @@
 
 #include <vector>
 #include <string>
+#include <Architecture.h>
+
 
 namespace L1 {
 
   class Item {
     public:
-      virtual std::string to_string() = 0;
+      virtual std::string to_string() const = 0;
   };
 
   class NullItem : public Item {
     public:
+      NullItem();
       std::string to_string() const override;
-  }
+  };
 
   class Number : public Item {
     public:
       Number(int64_t value);
-      std::string to_string() override const;
+      std::string to_string() const override;
       int64_t get() const;
-      boolean operator == (const Number &other) const;
+      bool operator == (const Number &other) const;
     private:
       int64_t value;
   };
@@ -28,9 +31,9 @@ namespace L1 {
   class Label : public Item {
     public:
       Label(std::string value);
-      std::string to_string() override const;
+      std::string to_string() const override;
       std::string get() const;
-      boolean operator == (const Label &other) const;
+      bool operator == (const Label &other) const;
     private:
       std::string value;
   };
@@ -38,9 +41,9 @@ namespace L1 {
   class Register : public Item {
     public:
       Register(Architecture::RegisterID r);
-      std::string to_string() override const;
+      std::string to_string() const override;
       Architecture::RegisterID get() const;
-      boolean operator == (const Label &other) const;
+      bool operator == (const Register &other) const;
     private:
       Architecture::RegisterID ID;
   };
@@ -48,9 +51,9 @@ namespace L1 {
   class MemoryLocation : public Item {
     public:
       MemoryLocation(Register* r, Number* n);
-      std::string to_string() override const;
+      std::string to_string() const override;
       std::pair<Register*, Number*> get() const;
-      boolean operator == (const Label &other) const;
+      bool operator == (const MemoryLocation &other) const;
     private:
       Register* base_register;
       Number* offset;
@@ -59,9 +62,9 @@ namespace L1 {
   class Operation : public Item {
     public:
       Operation(Architecture::OP);
-      std::string to_string() override const;
+      std::string to_string() const override;
       Architecture::OP get() const;
-      boolean operator == (const Operation &other) const;
+      bool operator == (const Operation &other) const;
     private:
       Architecture::OP OP;
   };
@@ -69,9 +72,9 @@ namespace L1 {
   class CmpOperation : public Item {
     public:
       CmpOperation(Architecture::CompareOP);
-      std::string to_string() override const;
+      std::string to_string() const override;
       Architecture::CompareOP get() const;
-      boolean operator == (const CmpOperation &other) const;
+      bool operator == (const CmpOperation &other) const;
     private:
       Architecture::CompareOP cmpOP;
   };
@@ -79,6 +82,9 @@ namespace L1 {
   /*
    * Instruction interface.
    */
+
+  class Visitor;
+
   class Instruction {
     public:
       virtual std::string to_string() const = 0;
@@ -90,24 +96,25 @@ namespace L1 {
    */
   class Instruction_return : public Instruction {
     public:
-      std::string to_string() override const;
+      Instruction_return();
+      std::string to_string() const override;
       void accept(Visitor* v) const;
   };
 
   class Instruction_assignment : public Instruction {
     public:
       Instruction_assignment(Item* dst, Item* src);
-      std::string to_string() override const;
+      std::string to_string() const override;
       void accept(Visitor* v) const;
     private:
-      Item* Src;
-      Item* Dst;
+      Item* src;
+      Item* dst;
   };
 
   class Instruction_operation : public Instruction{
     public:
       Instruction_operation(Item* left, Architecture::OP op, Item* right, Item* lea_reg, Item* factor);
-      std::string to_string() override const;
+      std::string to_string() const override;
       void accept(Visitor* v) const;
     private:
       Architecture::OP OP;
@@ -120,7 +127,7 @@ namespace L1 {
   class Instruction_cjump : public Instruction{
     public:
       Instruction_cjump(Item* left, Architecture::CompareOP cmpOP, Item* right, Item* label);
-      std::string to_string() override const;
+      std::string to_string() const override;
       void accept(Visitor* v) const;
     private:
       Architecture::CompareOP OP;
@@ -131,8 +138,8 @@ namespace L1 {
 
   class Instruction_save_cmp : public Instruction{
     public:
-      Instruction_cjump(Item* dst, Item* left, Architecture::CompareOP cmpOP, Item* right);
-      std::string to_string() override const;
+      Instruction_save_cmp(Item* dst, Item* left, Architecture::CompareOP cmpOP, Item* right);
+      std::string to_string() const override;
       void accept(Visitor* v) const;
     private:
       Item* dst;
@@ -144,56 +151,56 @@ namespace L1 {
   class Instruction_label : public Instruction{
     public:
       Instruction_label(Label* label);
-      std::string to_string() override const;
+      std::string to_string() const override;
       void accept(Visitor* v) const;
     private:
-      Label* Label;
+      Label* label;
   };
 
   class Instruction_goto : public Instruction{
     public:
       Instruction_goto(Label* label);
-      std::string to_string() override const;
+      std::string to_string() const override;
       void accept(Visitor* v) const;
     private:
-      Label* Label;
+      Label* label;
   };
 
   class Instruction_call : public Instruction {
     public:
       Instruction_call(Item* fn, Number* arg);
-      std::string to_string() override const;
+      std::string to_string() const override;
       void accept(Visitor* v) const;
     private:
-      Item* name;
-      Number* Arg;
+      Item* fn;
+      Number* arg;
   };
 
   class Instruction_call_print : public Instruction {
     public:
       Instruction_call_print();
-      std::string to_string() override const;
+      std::string to_string() const override;
       void accept(Visitor* v) const;
   };
 
   class Instruction_call_input : public Instruction {
     public:
       Instruction_call_input();
-      std::string to_string() override const;
+      std::string to_string() const override;
       void accept(Visitor* v) const;
   };
 
   class Instruction_call_allocate : public Instruction {
     public:
       Instruction_call_allocate();
-      std::string to_string() override const;
+      std::string to_string() const override;
       void accept(Visitor* v) const;
   };
 
   class Instruction_call_tensorError : public Instruction {
     public:
       Instruction_call_tensorError(Number* arg);
-      std::string to_string() override const;
+      std::string to_string() const override;
       void accept(Visitor* v) const;
     private:
       Number* arg;
@@ -206,6 +213,7 @@ namespace L1 {
       int64_t locals;
       std::vector<Instruction *> instructions;
       void accept(Visitor* v) const;
+      void to_string() const;
   };
 
   class Program {
@@ -213,6 +221,7 @@ namespace L1 {
       std::string entryPointLabel;
       std::vector<Function *> functions;
       void accept(Visitor* v) const;
+      void to_string() const;
   };
 
   class Visitor {
@@ -221,6 +230,7 @@ namespace L1 {
       virtual void visit(const Instruction_assignment* i) = 0;
       virtual void visit(const Instruction_operation* i) = 0;
       virtual void visit(const Instruction_cjump* i) = 0;
+      virtual void visit(const Instruction_save_cmp* i) = 0;
       virtual void visit(const Instruction_label* i) = 0;
       virtual void visit(const Instruction_goto* i) = 0;
       virtual void visit(const Instruction_call* i) = 0;

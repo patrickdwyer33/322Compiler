@@ -1,6 +1,5 @@
 #pragma once
 
-#include <vector>
 #include <string>
 
 namespace Architecture {
@@ -8,24 +7,10 @@ namespace Architecture {
     enum CompareOP {less_than, equal, less_than_or_equal};
     enum OP {plus_plus, minus_minus, plus_equals, minus_equals, multiply_equals, and_equals, lea, shift_left, shift_right};
 
-    RegisterID reg_from_string(std::string reg) const;
-    CompareOP cmpOP_from_string(std::string cmp) const;
-    OP OP_from_string(std::string op) const;
+    OP OP_from_string(std::string op);
 
-    /*
-    class Item {
-        public:
-            virtual std::string to_string() const = 0;
-    };
+    std::string to_string(RegisterID);
+    std::string to_string(CompareOP);
+    std::string to_string(OP);
 
-    class Register : public Item {
-        public:
-            virtual std::string to_string() const;
-    };
-
-    class Label : public Item {
-        public:
-            virtual std::string to_string() const;
-    }
-    */
 }

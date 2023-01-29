@@ -1,154 +1,340 @@
-#include "L1.h"
+#include <L1.h>
 #include <iostream>
+#include <string>
+
+// DO I NEED TO INCLUDE CONST/OVERRIDE KEYWORDS IN HERE??
 
 namespace L1 {
 
+  // NullItem
+  NullItem::NullItem() {
+    return;
+  }
+
+  std::string NullItem::to_string() const {
+    return "\t\t\tNullItem\n";
+  }
+
+  // Number
   Number::Number(int64_t value) {
-    Value = value;
+    value = value;
     return;
   }
 
-  Number::Print() {
-    std::cout << "This is a Number with value " << std::to_string(Value) << std::endl;
+  std::string Number::to_string() const {
+    return "\t\t\tValue: " + std::to_string(value) + "\n";
   }
 
-  Label::Label(string value) {
-    Value = value;
+  int64_t Number::get() const {
+    return value;
+  }
+
+  bool Number::operator == (const Number &other) const {
+    return value == other.get();
+  }
+
+  // Label
+  Label::Label(std::string value) {
+    value = value;
     return;
   }
 
-  Label::Print() {
-    std::cout << "This is a Label with value " << Value << std::endl;
+  std::string Label::to_string() const {
+    return "\t\t\tValue: " + value + "\n";
   }
 
-  Register::Register(RegisterID r) {
+  std::string Label::get() const {
+    return value;
+  }
+
+  bool Label::operator == (const Label &other) const {
+    return value == other.get();
+  }
+
+  // Register
+  Register::Register(Architecture::RegisterID r) {
     ID = r;
     return;
   }
 
-  Register::Print() {
-    std::cout << "This is a Register with RegisterID " << RegisterID << std::endl;
+  std::string Register::to_string() const {
+    return "\t\t\tRegister: " + Architecture::to_string(ID) + "\n";
   }
 
-  Mem_access::Mem_access(Item* reg, Item* offset) {
-    Base_register = reg;
-    Offset = offset
+  Architecture::RegisterID Register::get() const {
+    return ID;
+  }
+
+  bool Register::operator == (const Register &other) const {
+    return ID == other.get();
+  }
+
+  // MemoryLocation
+  MemoryLocation::MemoryLocation(Register* base, Number* off) {
+    base_register = base;
+    off = offset;
     return;
   }
 
-  Mem_access::Print() {
-    std::cout << "This is a Mem_access with Base_register " << RegisterID << std::endl;
-    std::cout << "and Offset " << Offset << std::endl;
+  std::string MemoryLocation::to_string() const {
+    return "\t\t\tMemoryLocation:\n\t" + base_register->to_string() + "\t" + offset->to_string();
   }
 
-  Operation::Operation(OperationID op, std::vector<Item*> args, int64_t num_args){
-    ID = op;
-    Args = args;
-    Num_Args = num_args;
+  std::pair<Register*, Number*> MemoryLocation::get() const {
+    return std::make_pair(base_register, offset);
+  }
+
+  bool MemoryLocation::operator == (const MemoryLocation &other) const {
+    return (std::make_pair(base_register, offset) == other.get());
+  }
+
+  // Operation
+  Operation::Operation(Architecture::OP op) {
+    OP = op;
     return;
   }
 
-  Operation::Print() {
-    std::cout << "This is an Operation with OperationID " << ID << std::endl;
-    std::cout << " and Args [ ";
-    for (auto obj : Args) {
-      std::cout << " " << obj.Print();
-    }
-    std::cout << "] and Num_Args " << Num_Args << std::endl;
+  std::string Operation::to_string() const {
+    return "\t\t\tOP: " + Architecture::to_string(OP) + "\n";
   }
 
-  Library_function::Library_function(LibraryCall fn) 
-    : Fn { fn } {
+  Architecture::OP Operation::get() const {
+    return OP;
+  }
+
+  bool Operation::operator == (const Operation &other) const {
+    return OP == other.get();
+  }
+
+  // CmpOperation
+  CmpOperation::CmpOperation(Architecture::CompareOP op) {
+    cmpOP = op;
     return;
   }
 
-  Library_function::Print() {
-    std::cout << "This is a Library_function with LibraryCall " << Fn << std::endl;
+  std::string CmpOperation::to_string() const {
+    return "\t\t\tCompareOP: " + Architecture::to_string(cmpOP) + "\n";
   }
 
-  Instruction::Print() {
-    std::cout << "This is an empty Instruction" << std::endl;
+  Architecture::CompareOP CmpOperation::get() const {
+    return cmpOP;
   }
 
-  Instruction_ret::Print() {
-    std::cout << "This is a Return Instruction" << std::endl;
+  bool CmpOperation::operator == (const CmpOperation &other) const {
+    return cmpOP == other.get();
   }
 
-  Instruction_assignment::Instruction_assignment(Item* dst, Item* src)
-    : s { src },
-      d { dst } {
+  std::string InstructionOffset = "\t\t";
+
+  // Instruction_return
+  Instruction_return::Instruction_return() {
     return;
   }
 
-  Instruction_assignment::Print() {
-    std::cout << "This is an Assignment Instruction with Src: ";
-    Src.Print();
-    std::cout << "and Dst: ";
-    Dst.Print();
+  std::string Instruction_return::to_string() const {
+    return InstructionOffset + "Instruction_return\n";
   }
 
-  Instruction_operation::Instruction_operation(Item* op)
-    : Op { op } {
+  void Instruction_return::accept(Visitor* v) const {
+    v->visit(this);
     return;
   }
 
-  Instruction_operation::Print() {
-    std::cout << "This is an Operation Instruction with Op: ";
-    Op.Print();
+  // Instruction_assignment
+  Instruction_assignment::Instruction_assignment(Item* dst, Item* src) {
+    src = src;
+    dst = dst;
+  }
+  std::string Instruction_assignment::to_string() const {
+    return InstructionOffset + "Instruction_assignment:\n" + src->to_string() + dst->to_string();
   }
 
-  Instruction_cjump::Instruction_cjump(Item* op, Item* label)
-    : Op { op },
-      Label { label } {
+  void Instruction_assignment::accept(Visitor* v) const {
+    v->visit(this);
     return;
   }
 
-  Instruction_cjump::Print() {
-    std::cout << "This is a cJump Instruction with Op: ";
-    Op.Print();
-    std::cout << "and Label: ";
-    Label.Print();
+  // Instruction_operation
+  Instruction_operation::Instruction_operation(Item* left, Architecture::OP op, Item* right, Item* lea_reg, Item* factor) {
+    OP = op;
+    left = left;
+    right = right;
+    lea_reg = lea_reg;
+    factor = factor;
   }
 
-  Instruction_goto::Instruction_goto(Item* label)
-    : Label { label } {
+  std::string Instruction_operation::to_string() const {
+    return InstructionOffset + "Instruction_operation:\n" + left->to_string() + Architecture::to_string(OP) + right->to_string() + lea_reg->to_string() + factor->to_string();
+  }
+
+  void Instruction_operation::accept(Visitor* v) const {
+    v->visit(this);
     return;
   }
 
-  Instruction_goto::Print() {
-    std::cout << "This is a Goto Instruction with Label: ";
-    Label.Print();
+  // Instruction_cjump
+  Instruction_cjump::Instruction_cjump(Item* left, Architecture::CompareOP cmpOP, Item* right, Item* label) {
+    OP = cmpOP;
+    left = left;
+    right = right;
+    label = label;
   }
 
-  Instruction_call::Instruction_call(Item* fn, Item* arg)
-    : Fn { fn },
-      Arg { arg } {
+  std::string Instruction_cjump::to_string() const {
+    return InstructionOffset + "Instruction_cjump:\n" + left->to_string() + Architecture::to_string(OP) + right->to_string() + label->to_string();
+  }
+
+  void Instruction_cjump::accept(Visitor* v) const {
+    v->visit(this);
     return;
   }
 
-  Instruction_call::Print() {
-    std::cout << "This is a Call Instruction with Fn: ";
-    Fn.Print();
-    std::cout << "and Arg: ";
-    Arg.Print();
+  // Instruction_save_cmp
+  Instruction_save_cmp::Instruction_save_cmp(Item* dst, Item* left, Architecture::CompareOP cmpOP, Item* right) {
+    dst = dst;
+    OP = cmpOP;
+    left = left;
+    right = right;
   }
 
-  Function::Print() {
+  std::string Instruction_save_cmp::to_string() const {
+    return InstructionOffset + "Instruction_save_cmp:\n" + dst->to_string() + Architecture::to_string(OP) + left->to_string() + right->to_string();
+  }
+
+  void Instruction_save_cmp::accept(Visitor* v) const {
+    v->visit(this);
+    return;
+  }
+
+  // Instruction_label
+  Instruction_label::Instruction_label(Label* label) {
+    label = label;
+    return;
+  }
+
+  std::string Instruction_label::to_string() const {
+    return InstructionOffset + "Instruction_label:\n" + label->to_string();
+  }
+
+  void Instruction_label::accept(Visitor* v) const {
+    v->visit(this);
+    return;
+  }
+
+  // Instruction_goto
+  Instruction_goto::Instruction_goto(Label* label) {
+    label = label;
+    return;
+  }
+
+  std::string Instruction_goto::to_string() const {
+    return InstructionOffset + "Instruction_goto:\n" + label->to_string();
+  }
+
+  void Instruction_goto::accept(Visitor* v) const {
+    v->visit(this);
+    return;
+  }
+
+  // Instruction_call
+  Instruction_call::Instruction_call(Item* fn, Number* arg) {
+    fn = fn;
+    arg = arg;
+    return;
+  }
+
+  std::string Instruction_call::to_string() const {
+    return InstructionOffset + "Instruction_call:\n" + fn->to_string() + arg->to_string();
+  }
+
+  void Instruction_call::accept(Visitor* v) const {
+    v->visit(this);
+    return;
+  }
+
+  // Instruction_call_print
+  Instruction_call_print::Instruction_call_print() {
+    return;
+  }
+
+  std::string Instruction_call_print::to_string() const {
+    return InstructionOffset + "Instruction_call_print:\n";
+  }
+
+  void Instruction_call_print::accept(Visitor* v) const {
+    v->visit(this);
+    return;
+  }
+
+  // Instruction_call_input
+  Instruction_call_input::Instruction_call_input() {
+    return;
+  }
+
+  std::string Instruction_call_input::to_string() const {
+    return InstructionOffset + "Instruction_call_input:\n";
+  }
+
+  void Instruction_call_input::accept(Visitor* v) const {
+    v->visit(this);
+    return;
+  }
+
+  // Instruction_call_allocate
+  Instruction_call_allocate::Instruction_call_allocate() {
+    return;
+  }
+
+  std::string Instruction_call_allocate::to_string() const {
+    return InstructionOffset + "Instruction_call_allocate:\n";
+  }
+
+  void Instruction_call_allocate::accept(Visitor* v) const {
+    v->visit(this);
+    return;
+  }
+
+  // Instruction_call_tensorError
+  Instruction_call_tensorError::Instruction_call_tensorError(Number* arg) {
+    arg = arg;
+    return;
+  }
+
+  std::string Instruction_call_tensorError::to_string() const {
+    return InstructionOffset + "Instruction_call_tensorError:\n";
+  }
+
+  void Instruction_call_tensorError::accept(Visitor* v) const {
+    v->visit(this);
+    return;
+  }
+
+  void Function::to_string() const {
     std::cout << "This is a function with name " << name << std::endl;
-    std::cout << "and num_arguments " << arguments << std::endl;
-    std::cout << "and num_locals " << locals << std::endl;
+    std::cout << "and num_arguments " << std::to_string(arguments) << std::endl;
+    std::cout << "and num_locals " << std::to_string(locals) << std::endl;
     std::cout << "and its instructions are: ";
     for (auto step : instructions) {
-      step.Print();
+      std::cout << step->to_string();
     }
   }
 
-  Program::Print() {
+  void Function::accept(Visitor* v) const {
+    v->visit(this);
+    return;
+  }
+
+  void Program::to_string() const {
     std::cout << "This is a Program with entryPointLabel " << entryPointLabel << std::endl;
     std::cout << "and its functions are: ";
     for (auto fn : functions) {
-      fn.Print();
+      fn->to_string();
     }
+  }
+  
+  void Program::accept(Visitor* v) const {
+    v->visit(this);
+    return;
   }
 
 }

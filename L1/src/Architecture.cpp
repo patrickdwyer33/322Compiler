@@ -1,105 +1,98 @@
 #include <Architecture.h>
+#include <unordered_map>
 
 namespace Architecture {
-    RegisterID reg_from_string(std::string reg) const {
-        RegisterID* r;
-        switch(reg) {
-            case "rdi":
-                *r = RegisterID::rdi;
+
+    std::unordered_map<std::string, RegisterID> reg_from_string_map = {
+        {"rdi", RegisterID::rdi},
+        {"rax", RegisterID::rax},
+        {"rsi", RegisterID::rsi},
+        {"rdx", RegisterID::rdx},
+        {"rcx", RegisterID::rcx},
+        {"r8", RegisterID::r8},
+        {"r9", RegisterID::r9},
+        {"rbx", RegisterID::rbx},
+        {"rbp", RegisterID::rbp},
+        {"r10", RegisterID::r10},
+        {"r11", RegisterID::r11},
+        {"r12", RegisterID::r12},
+        {"r13", RegisterID::r13},
+        {"r14", RegisterID::r14},
+        {"r15", RegisterID::r15},
+        {"rsp", RegisterID::rsp}
+    };
+
+    std::unordered_map<std::string, CompareOP> cmpOP_from_string_map = {
+        {"<", CompareOP::less_than},
+        {"<=", CompareOP::less_than_or_equal},
+        {"=", CompareOP::equal}
+    };
+
+    std::unordered_map<std::string, OP> OP_from_string_map = {
+        {"++", OP::plus_plus},
+        {"--", OP::minus_minus},
+        {"+=", OP::plus_equals},
+        {"--", OP::minus_equals},
+        {"-=", OP::minus_equals},
+        {"*=", OP::multiply_equals},
+        {"&=", OP::and_equals},
+        {"@", OP::lea},
+        {"<<=", OP::shift_left},
+        {">>=", OP::shift_right}
+    };
+
+    std::string to_string(Architecture::RegisterID r) {
+        std::string s;
+        switch(r) {
+            case RegisterID::rdi:
+                s = "rdi";
                 break;
-            case "rax":
-                *r = RegisterID::rax;
+            case RegisterID::rax:
+                s = "rax";
                 break;
-            case "rsi":
-                *r = RegisterID::rsi;
+            case RegisterID::rsi:
+                s = "rsi";
                 break;
-            case "rdx":
-                *r = RegisterID::rdx;
+            case RegisterID::rdx:
+                s = "rdx";
                 break;
-            case "rcx":
-                *r = RegisterID::rcx;
+            case RegisterID::rcx:
+                s = "rcx";
                 break;
-            case "r8":
-                *r = RegisterID::r8;
+            case RegisterID::r8:
+                s = "r8";
                 break;
-            case "r9":
-                *r = RegisterID::r9;
+            case RegisterID::r9:
+                s = "r9";
                 break;
-            case "rbx":
-                *r = RegisterID::rbx;
+            case RegisterID::rbx:
+                s = "rbx";
                 break;
-            case "rbp":
-                *r = RegisterID::rbp;
+            case RegisterID::rbp:
+                s = "rbp";
                 break;
-            case "r10":
-                *r = RegisterID::r10;
+            case RegisterID::r10:
+                s = "r10";
                 break;
-            case "r11":
-                *r = RegisterID::r11;
+            case RegisterID::r11:
+                s = "r11";
                 break;
-            case "r12":
-                *r = RegisterID::r12;
+            case RegisterID::r12:
+                s = "r12";
                 break;
-            case "r13":
-                *r = RegisterID::r13;
+            case RegisterID::r13:
+                s = "r13";
                 break;
-            case "r14":
-                *r = RegisterID::r14;
+            case RegisterID::r14:
+                s = "r14";
                 break;
-            case "r15":
-                *r = RegisterID::r15;
+            case RegisterID::r15:
+                s = "r15";
                 break;
-            case "rsp":
-                *r = RegisterID::rsp;
+            case RegisterID::rsp:
+                s = "rsp";
                 break;
         }
-        return *r;
-    };
-    CompareOP cmpOP_from_string(std::string cmp) const {
-        CompareOP* ret_cmp;
-        switch(cmp) {
-            case "<":
-                *ret_cmp = CompareOP::less_than;
-                break;
-            case "<=":
-                *ret_cmp = CompareOP::less_than_or_equal;
-                break;
-            case "=":
-                *ret_cmp = CompareOP::equal;
-                break;
-        }
-        return *ret_cmp;
-    };
-    OP OP_from_string(std::string op) const {
-        OP* ret_op;
-        switch(op) {
-            case "++":
-                *ret_op = OP::plus_plus;
-                break;
-            case "--":
-                *ret_op = OP::minus_minus;
-                break;
-            case "+=":
-                *ret_op = OP::plus_equals;
-                break;
-            case "--":
-                *ret_op = OP::minus_equals;
-                break;
-            case "*=":
-                *ret_op = OP::multiply_equals;
-                break;
-            case "&=":
-                *ret_op = OP::and_equals;
-                break;
-            case "@":
-                *ret_op = OP::lea;
-                break;
-            case "<<=":
-                *ret_op = OP::shift_left;
-                break;
-            case ">>=":
-                *ret_op = OP::shift_right;
-                break;
-        }
-    };
+        return s;
+    }
 }
