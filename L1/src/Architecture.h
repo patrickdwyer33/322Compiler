@@ -7,6 +7,8 @@ namespace Architecture {
     enum CompareOP {less_than, equal, less_than_or_equal};
     enum OP {plus_plus, minus_minus, plus_equals, minus_equals, multiply_equals, and_equals, lea, shift_left, shift_right};
 
+    RegisterID reg_from_string(std::string r);
+    CompareOP cmpOP_from_string(std::string cmpOP);
     OP OP_from_string(std::string op);
 
     std::string to_string(RegisterID);

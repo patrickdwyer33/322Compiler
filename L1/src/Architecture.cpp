@@ -22,11 +22,19 @@ namespace Architecture {
         {"rsp", RegisterID::rsp}
     };
 
+    RegisterID reg_from_string(std::string r) {
+        return reg_from_string_map[r];
+    } 
+
     std::unordered_map<std::string, CompareOP> cmpOP_from_string_map = {
         {"<", CompareOP::less_than},
         {"<=", CompareOP::less_than_or_equal},
         {"=", CompareOP::equal}
     };
+
+    CompareOP cmpOP_from_string(std::string cmpOP) {
+        return cmpOP_from_string_map[cmpOP];
+    } 
 
     std::unordered_map<std::string, OP> OP_from_string_map = {
         {"++", OP::plus_plus},
@@ -40,6 +48,10 @@ namespace Architecture {
         {"<<=", OP::shift_left},
         {">>=", OP::shift_right}
     };
+
+    OP OP_from_string(std::string op) {
+        return OP_from_string_map[op];
+    } 
 
     std::string to_string(Architecture::RegisterID r) {
         std::string s;

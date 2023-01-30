@@ -31,7 +31,7 @@ namespace Generator{
     return;
   }
 
-  void generate_code(Program p) {
+  void generate_code(L1::Program p) {
 
     /* 
      * Open the output file.

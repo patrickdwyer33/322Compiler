@@ -21,23 +21,23 @@ namespace Generator{
   void generate_assignment(L1::MemoryLocation mem, L1::Label* label);
   void generate_assignment(L1::MemoryLocation mem, L1::Register* r);
   // w aop t, w sop sx, w sop N
-  void generate_op(L1::Register* r1, Architecture::OP op, L1::Register* r2, L1::NullItem* blank, L1::NullItem* blank2);
-  void generate_op(L1::Register* r, Architecture::OP op, L1::Number* n, L1::NullItem* blank, L1::NullItem* blank2);
+  void generate_op(L1::Register* r1, L1::Operation* op, L1::Register* r2, L1::NullItem* blank, L1::NullItem* blank2);
+  void generate_op(L1::Register* r, L1::Operation* op, L1::Number* n, L1::NullItem* blank, L1::NullItem* blank2);
   // mem x M += t, mem x M -= t
-  void generate_op(L1::MemoryLocation* mem, Architecture::OP op, L1::Register* r, L1::NullItem* blank, L1::NullItem* blank2);
-  void generate_op(L1::MemoryLocation* mem, Architecture::OP op, L1::Number* r, L1::NullItem* blank, L1::NullItem* blank2);
+  void generate_op(L1::MemoryLocation* mem, L1::Operation* op, L1::Register* r, L1::NullItem* blank, L1::NullItem* blank2);
+  void generate_op(L1::MemoryLocation* mem, L1::Operation* op, L1::Number* r, L1::NullItem* blank, L1::NullItem* blank2);
   // w += mem x M, w -= mem x M
-  void generate_op(L1::Register* r, Architecture::OP op, L1::MemoryLocation mem, L1::NullItem blank, L1::NullItem* blank2);
+  void generate_op(L1::Register* r, L1::Operation* op, L1::MemoryLocation mem, L1::NullItem blank, L1::NullItem* blank2);
   // w <- t cmp t
-  void generate_save_cmp(L1::Register* dst, L1::Register* r1, Architecture::CompareOP cmpOP, L1::Register* r2);
-  void generate_save_cmp(L1::Register* dst, L1::Register* r, Architecture::CompareOP cmpOP, L1::Number* n);
-  void generate_save_cmp(L1::Register* dst, L1::Number* n, Architecture::CompareOP cmpOP, L1::Register* r);
-  void generate_save_cmp(L1::Register* dst, L1::Number* n1, Architecture::CompareOP cmpOP, L1::Number* n2);
+  void generate_save_cmp(L1::Register* dst, L1::Register* r1, L1::CmpOperation* cmpOP, L1::Register* r2);
+  void generate_save_cmp(L1::Register* dst, L1::Register* r, L1::CmpOperation* cmpOP, L1::Number* n);
+  void generate_save_cmp(L1::Register* dst, L1::Number* n, L1::CmpOperation* cmpOP, L1::Register* r);
+  void generate_save_cmp(L1::Register* dst, L1::Number* n1, L1::CmpOperation* cmpOP, L1::Number* n2);
   // cjump t cmp t label
-  void generate_cjump(L1::Register* r1, Architecture::CompareOP cmpOP, L1::Register* r2, L1::Label* label);
-  void generate_cjump(L1::Number* n, Architecture::CompareOP cmpOP, L1::Register* r, L1::Label* label);
-  void generate_cjump(L1::Register* r, Architecture::CompareOP cmpOP, L1::Number* n, L1::Label* label);
-  void generate_cjump(L1::Number* n1, Architecture::CompareOP cmpOP, L1::Number* n2, L1::Label* label);
+  void generate_cjump(L1::Register* r1, L1::CmpOperation* cmpOP, L1::Register* r2, L1::Label* label);
+  void generate_cjump(L1::Number* n, L1::CmpOperation* cmpOP, L1::Register* r, L1::Label* label);
+  void generate_cjump(L1::Register* r, L1::CmpOperation* cmpOP, L1::Number* n, L1::Label* label);
+  void generate_cjump(L1::Number* n1, L1::CmpOperation* cmpOP, L1::Number* n2, L1::Label* label);
   // label
   void generate_label(L1::Label* label);
   // goto label

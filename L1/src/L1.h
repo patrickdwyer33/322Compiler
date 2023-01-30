@@ -50,13 +50,13 @@ namespace L1 {
 
   class MemoryLocation : public Item {
     public:
-      MemoryLocation(Register* r, Number* n);
+      MemoryLocation(Item* r, Item* n);
       std::string to_string() const override;
-      std::pair<Register*, Number*> get() const;
+      std::pair<Item*, Item*> get() const;
       bool operator == (const MemoryLocation &other) const;
     private:
-      Register* base_register;
-      Number* offset;
+      Item* base_register;
+      Item* offset;
   };
 
   class Operation : public Item {
@@ -113,11 +113,11 @@ namespace L1 {
 
   class Instruction_operation : public Instruction{
     public:
-      Instruction_operation(Item* left, Architecture::OP op, Item* right, Item* lea_reg, Item* factor);
+      Instruction_operation(Item* left, Item* op, Item* right, Item* lea_reg, Item* factor);
       std::string to_string() const override;
       void accept(Visitor* v) const;
     private:
-      Architecture::OP OP;
+      Item* OP;
       Item* left;
       Item* right;
       Item* lea_reg;
@@ -126,11 +126,11 @@ namespace L1 {
 
   class Instruction_cjump : public Instruction{
     public:
-      Instruction_cjump(Item* left, Architecture::CompareOP cmpOP, Item* right, Item* label);
+      Instruction_cjump(Item* left, Item* cmpOP, Item* right, Item* label);
       std::string to_string() const override;
       void accept(Visitor* v) const;
     private:
-      Architecture::CompareOP OP;
+      Item* OP;
       Item* left;
       Item* right;
       Item* label;
@@ -138,42 +138,42 @@ namespace L1 {
 
   class Instruction_save_cmp : public Instruction{
     public:
-      Instruction_save_cmp(Item* dst, Item* left, Architecture::CompareOP cmpOP, Item* right);
+      Instruction_save_cmp(Item* dst, Item* left, Item* cmpOP, Item* right);
       std::string to_string() const override;
       void accept(Visitor* v) const;
     private:
       Item* dst;
-      Architecture::CompareOP OP;
+      Item* OP;
       Item* left;
       Item* right;
   };
 
   class Instruction_label : public Instruction{
     public:
-      Instruction_label(Label* label);
+      Instruction_label(Item* label);
       std::string to_string() const override;
       void accept(Visitor* v) const;
     private:
-      Label* label;
+      Item* label;
   };
 
   class Instruction_goto : public Instruction{
     public:
-      Instruction_goto(Label* label);
+      Instruction_goto(Item* label);
       std::string to_string() const override;
       void accept(Visitor* v) const;
     private:
-      Label* label;
+      Item* label;
   };
 
   class Instruction_call : public Instruction {
     public:
-      Instruction_call(Item* fn, Number* arg);
+      Instruction_call(Item* fn, Item* arg);
       std::string to_string() const override;
       void accept(Visitor* v) const;
     private:
       Item* fn;
-      Number* arg;
+      Item* arg;
   };
 
   class Instruction_call_print : public Instruction {
@@ -199,11 +199,11 @@ namespace L1 {
 
   class Instruction_call_tensorError : public Instruction {
     public:
-      Instruction_call_tensorError(Number* arg);
+      Instruction_call_tensorError(Item* arg);
       std::string to_string() const override;
       void accept(Visitor* v) const;
     private:
-      Number* arg;
+      Item* arg;
   };
 
   class Function {

@@ -70,7 +70,7 @@ namespace L1 {
   }
 
   // MemoryLocation
-  MemoryLocation::MemoryLocation(Register* base, Number* off) {
+  MemoryLocation::MemoryLocation(Item* base, Item* off) {
     base_register = base;
     off = offset;
     return;
@@ -80,12 +80,12 @@ namespace L1 {
     return "\t\t\tMemoryLocation:\n\t" + base_register->to_string() + "\t" + offset->to_string();
   }
 
-  std::pair<Register*, Number*> MemoryLocation::get() const {
+  std::pair<Item*, Item*> MemoryLocation::get() const {
     return std::make_pair(base_register, offset);
   }
 
   bool MemoryLocation::operator == (const MemoryLocation &other) const {
-    return (std::make_pair(base_register, offset) == other.get());
+    return this->get() == other.get();
   }
 
   // Operation
@@ -155,7 +155,7 @@ namespace L1 {
   }
 
   // Instruction_operation
-  Instruction_operation::Instruction_operation(Item* left, Architecture::OP op, Item* right, Item* lea_reg, Item* factor) {
+  Instruction_operation::Instruction_operation(Item* left, Item* op, Item* right, Item* lea_reg, Item* factor) {
     OP = op;
     left = left;
     right = right;
@@ -164,7 +164,7 @@ namespace L1 {
   }
 
   std::string Instruction_operation::to_string() const {
-    return InstructionOffset + "Instruction_operation:\n" + left->to_string() + Architecture::to_string(OP) + right->to_string() + lea_reg->to_string() + factor->to_string();
+    return InstructionOffset + "Instruction_operation:\n" + left->to_string() + OP->to_string() + right->to_string() + lea_reg->to_string() + factor->to_string();
   }
 
   void Instruction_operation::accept(Visitor* v) const {
@@ -173,7 +173,7 @@ namespace L1 {
   }
 
   // Instruction_cjump
-  Instruction_cjump::Instruction_cjump(Item* left, Architecture::CompareOP cmpOP, Item* right, Item* label) {
+  Instruction_cjump::Instruction_cjump(Item* left, Item* cmpOP, Item* right, Item* label) {
     OP = cmpOP;
     left = left;
     right = right;
@@ -181,7 +181,7 @@ namespace L1 {
   }
 
   std::string Instruction_cjump::to_string() const {
-    return InstructionOffset + "Instruction_cjump:\n" + left->to_string() + Architecture::to_string(OP) + right->to_string() + label->to_string();
+    return InstructionOffset + "Instruction_cjump:\n" + left->to_string() + OP->to_string() + right->to_string() + label->to_string();
   }
 
   void Instruction_cjump::accept(Visitor* v) const {
@@ -190,7 +190,7 @@ namespace L1 {
   }
 
   // Instruction_save_cmp
-  Instruction_save_cmp::Instruction_save_cmp(Item* dst, Item* left, Architecture::CompareOP cmpOP, Item* right) {
+  Instruction_save_cmp::Instruction_save_cmp(Item* dst, Item* left, Item* cmpOP, Item* right) {
     dst = dst;
     OP = cmpOP;
     left = left;
@@ -198,7 +198,7 @@ namespace L1 {
   }
 
   std::string Instruction_save_cmp::to_string() const {
-    return InstructionOffset + "Instruction_save_cmp:\n" + dst->to_string() + Architecture::to_string(OP) + left->to_string() + right->to_string();
+    return InstructionOffset + "Instruction_save_cmp:\n" + dst->to_string() + OP->to_string() + left->to_string() + right->to_string();
   }
 
   void Instruction_save_cmp::accept(Visitor* v) const {
@@ -207,7 +207,7 @@ namespace L1 {
   }
 
   // Instruction_label
-  Instruction_label::Instruction_label(Label* label) {
+  Instruction_label::Instruction_label(Item* label) {
     label = label;
     return;
   }
@@ -222,7 +222,7 @@ namespace L1 {
   }
 
   // Instruction_goto
-  Instruction_goto::Instruction_goto(Label* label) {
+  Instruction_goto::Instruction_goto(Item* label) {
     label = label;
     return;
   }
@@ -237,7 +237,7 @@ namespace L1 {
   }
 
   // Instruction_call
-  Instruction_call::Instruction_call(Item* fn, Number* arg) {
+  Instruction_call::Instruction_call(Item* fn, Item* arg) {
     fn = fn;
     arg = arg;
     return;
@@ -295,7 +295,7 @@ namespace L1 {
   }
 
   // Instruction_call_tensorError
-  Instruction_call_tensorError::Instruction_call_tensorError(Number* arg) {
+  Instruction_call_tensorError::Instruction_call_tensorError(Item* arg) {
     arg = arg;
     return;
   }

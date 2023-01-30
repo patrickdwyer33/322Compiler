@@ -357,6 +357,7 @@ namespace Parser {
       pegtl::seq< pegtl::at<Instruction_assignment>, Instruction_assignment>,
       pegtl::seq< pegtl::at<Instruction_operation1>, Instruction_operation1>,
       pegtl::seq< pegtl::at<Instruction_operation2>, Instruction_operation2>,
+      pegtl::seq< pegtl::at<Instruction_operation3>, Instruction_operation3>,
       pegtl::seq< pegtl::at<Instruction_cjump>, Instruction_cjump>,
       pegtl::seq< pegtl::at<Instruction_save_cmp>, Instruction_save_cmp>,
       pegtl::seq< pegtl::at<Instruction_goto>, Instruction_goto>,
@@ -485,16 +486,16 @@ namespace Parser {
   template<> struct action <MemoryLocation> {
     template<typename Input>
     static void apply(const Input & in, L1::Program & p) {
-      L1::Number* n = parsed_items.back();
+      auto n = parsed_items.back();
       parsed_items.pop_back();
-      L1::Register* r = parsed_items.back();
+      auto r = parsed_items.back();
       parsed_items.pop_back();
       L1::MemoryLocation* mem = new L1::MemoryLocation(r, n);
       parsed_items.push_back(mem);
     }
   };
 
-  template<> struct action <MemoryLocation> {
+  template<> struct action <Operation> {
     template<typename Input>
     static void apply(const Input & in, L1::Program & p) {
       Architecture::OP opID = Architecture::OP_from_string(in.string());
@@ -507,7 +508,7 @@ namespace Parser {
     template<typename Input>
 	  static void apply(const Input & in, L1::Program & p) {
       L1::Function* currentF = p.functions.back();
-      L1::Number* i = new L1::Instruction_ret();
+      L1::Instruction_return* i = new L1::Instruction_return();
       currentF->instructions.push_back(i);
     }
   };
@@ -534,14 +535,16 @@ namespace Parser {
 	  static void apply(const Input & in, L1::Program & p) {
       L1::Function* currentF = p.functions.back();
 
-      L1::Operation* op = parsed_items.back();
+      auto op = parsed_items.back();
       parsed_items.pop_back();
-      L1::Register* reg = parsed_items.back();
+      auto reg = parsed_items.back();
       parsed_items.pop_back();
 
-      L1::NullItem* emptyThing;
+      L1::NullItem* emptyThing = new L1::NullItem();
+      L1::NullItem* emptyThing2 = new L1::NullItem();
+      L1::NullItem* emptyThing3 = new L1::NullItem();
 
-      L1::Instruction_operation* i = new Instruction_operation(reg, op, emptyThing, emptyThing, emptyThing);
+      L1::Instruction_operation* i = new L1::Instruction_operation(reg, op, emptyThing, emptyThing2, emptyThing3);
 
       currentF->instructions.push_back(i);
     }
@@ -553,14 +556,17 @@ namespace Parser {
 	  static void apply(const Input & in, L1::Program & p) {
       L1::Function* currentF = p.functions.back();
 
-      auto left = parsed_items.back();
-      parsed_items.pop_back();
-      L1::Operation* op = parsed_items.back();
-      parsed_items.pop_back();
       auto right = parsed_items.back();
       parsed_items.pop_back();
+      auto op = parsed_items.back();
+      parsed_items.pop_back();
+      auto left = parsed_items.back();
+      parsed_items.pop_back();
 
-      L1::Instruction_operation* i = new Instruction_operation(left, op, right, emptyThing, emptyThing);
+      L1::NullItem* emptyThing = new L1::NullItem();
+      L1::NullItem* emptyThing2 = new L1::NullItem();
+
+      L1::Instruction_operation* i = new L1::Instruction_operation(left, op, right, emptyThing, emptyThing2);
 
       currentF->instructions.push_back(i);
     }
@@ -572,18 +578,18 @@ namespace Parser {
 	  static void apply(const Input & in, L1::Program & p) {
       L1::Function* currentF = p.functions.back();
 
-      L1::Number* factor = parsed_items.back();
+      auto factor = parsed_items.back();
       parsed_items.pop_back();
-      L1::Register* second = parsed_items.back();
+      auto second = parsed_items.back();
       parsed_items.pop_back();
-      L1::Register* first = parsed_items.back();
+      auto first = parsed_items.back();
       parsed_items.pop_back();
-      L1::Operation* op = parsed_items.back();
+      auto op = parsed_items.back();
       parsed_items.pop_back();
-      L1::Register* dst = parsed_items.back();
+      auto dst = parsed_items.back();
       parsed_items.pop_back();
 
-      L1::Instruction_operation* i = new Instruction_operation(dst, op, first, second, factor);
+      L1::Instruction_operation* i = new L1::Instruction_operation(dst, op, first, second, factor);
 
       currentF->instructions.push_back(i);
     }
@@ -594,16 +600,16 @@ namespace Parser {
     static void apply(const Input & in, L1::Program & p){
       L1::Function* currentF = p.functions.back();
 
-      L1::Label* label = parsed_items.back();
+      auto label = parsed_items.back();
       parsed_items.pop_back();
       auto right = parsed_items.back();
       parsed_items.pop_back();
-      L1::CompareOP* cmpOP = parsed_items.back();
+      auto cmpOP = parsed_items.back();
       parsed_items.pop_back();
       auto left = parsed_items.back();
       parsed_items.pop_back();
 
-      L1::Instruction_cjump* i = new Instruction_cjump(left, cmpOP, right, label);
+      L1::Instruction_cjump* i = new L1::Instruction_cjump(left, cmpOP, right, label);
 
       currentF->instructions.push_back(i);
     }
@@ -616,14 +622,14 @@ namespace Parser {
 
       auto right = parsed_items.back();
       parsed_items.pop_back();
-      L1::CompareOP* cmpOP = parsed_items.back();
+      auto cmpOP = parsed_items.back();
       parsed_items.pop_back();
       auto left = parsed_items.back();
       parsed_items.pop_back();
       auto dst = parsed_items.back();
       parsed_items.pop_back();
 
-      L1::Instruction_save_cmp i = new Instruction_save_cmp(dst, left, cmpOP, right);
+      L1::Instruction_save_cmp* i = new L1::Instruction_save_cmp(dst, left, cmpOP, right);
 
       currentF->instructions.push_back(i);
     }
@@ -634,10 +640,10 @@ namespace Parser {
     static void apply(const Input & in, L1::Program & p){
       L1::Function* currentF = p.functions.back();
 
-      L1::Label* label = parsed_items.back();
+      auto label = parsed_items.back();
       parsed_items.pop_back();
 
-      L1::Instruction_label* i = new Instruction_label(label);
+      L1::Instruction_label* i = new L1::Instruction_label(label);
 
       currentF->instructions.push_back(i);
     }
@@ -648,10 +654,10 @@ namespace Parser {
     static void apply(const Input & in, L1::Program & p){
       L1::Function* currentF = p.functions.back();
 
-      L1::Label* label = parsed_items.back();
+      auto label = parsed_items.back();
       parsed_items.pop_back();
 
-      L1::Instruction_goto* i = new Instruction_goto(label);
+      L1::Instruction_goto* i = new L1::Instruction_goto(label);
 
       currentF->instructions.push_back(i);
     }
@@ -662,12 +668,12 @@ namespace Parser {
 	  static void apply(const Input & in, L1::Program & p){
       L1::Function* currentF = p.functions.back();
 
-      L1::Number* num_args = parsed_items.back();
+      auto num_args = parsed_items.back();
       parsed_items.pop_back();
       auto fn = parsed_items.back();
       parsed_items.pop_back();
 
-      L1::Instruction_call* i = new Instruction_call(fn, num_args)
+      L1::Instruction_call* i = new L1::Instruction_call(fn, num_args);
 
       currentF->instructions.push_back(i);
     }
@@ -680,7 +686,7 @@ namespace Parser {
 
       parsed_items.pop_back();
 
-      L1::Instruction_call_print* i = new Instruction_call_print();
+      L1::Instruction_call_print* i = new L1::Instruction_call_print();
 
       currentF->instructions.push_back(i);
     }
@@ -693,7 +699,7 @@ namespace Parser {
 
       parsed_items.pop_back();
 
-      L1::Instruction_call_input* i = new Instruction_call_input();
+      L1::Instruction_call_input* i = new L1::Instruction_call_input();
 
       currentF->instructions.push_back(i);
     }
@@ -706,7 +712,7 @@ namespace Parser {
 
       parsed_items.pop_back();
 
-      L1::Instruction_call_allocate* i = new Instruction_call_allocate();
+      L1::Instruction_call_allocate* i = new L1::Instruction_call_allocate();
 
       currentF->instructions.push_back(i);
     }
@@ -717,16 +723,16 @@ namespace Parser {
 	  static void apply(const Input & in, L1::Program & p){
       L1::Function* currentF = p.functions.back();
 
-      L1::Number* arg = parsed_items.back();
+      auto arg = parsed_items.back();
       parsed_items.pop_back();
 
-      L1::Instruction_call_tensorError* i = new Instruction_call_tensorError(arg);
+      L1::Instruction_call_tensorError* i = new L1::Instruction_call_tensorError(arg);
 
       currentF->instructions.push_back(i);
     }
   };
 
-  Program parse_file (char *fileName){
+  L1::Program parse_file (char *fileName){
 
     /* 
      * Check the grammar for some possible issues.
@@ -736,9 +742,9 @@ namespace Parser {
     /*
      * Parse.
      */
-    file_input<> fileInput(fileName);
+    pegtl::file_input<> fileInput(fileName);
     L1::Program p;
-    parse<grammar, action>(fileInput, p);
+    pegtl::parse<grammar, action>(fileInput, p);
 
     return p;
   }
