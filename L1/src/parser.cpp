@@ -32,9 +32,9 @@
 
 namespace pegtl = tao::TAO_PEGTL_NAMESPACE;
 
-namespace L1 {
+namespace Parser {
 
-  std::vector<Item *> parsed_items;
+  std::vector<L1::Item *> parsed_items;
 
   struct name:
     pegtl::seq<
@@ -53,6 +53,19 @@ namespace L1 {
       >
     > {};
 
+  struct Number:
+    pegtl::seq<
+      pegtl::opt<
+        pegtl::sor<
+          pegtl::one<'-'>,
+          pegtl::one<'+'>
+        >
+      >,
+      pegtl::plus< 
+        pegtl::digit
+      >
+    >{};
+
   struct argument_number:
     Number {};
 
@@ -65,6 +78,55 @@ namespace L1 {
       pegtl::until< pegtl::eolf > 
     > {};
 
+  struct seps: 
+    pegtl::star< 
+      pegtl::sor< 
+        pegtl::ascii::space, 
+        comment 
+      > 
+    > {};
+
+  struct Register:
+    pegtl::sor<
+      TAOCPP_PEGTL_STRING("rdi"),
+      TAOCPP_PEGTL_STRING("rax"),
+      TAOCPP_PEGTL_STRING("rsi"),
+      TAOCPP_PEGTL_STRING("rdx"),
+      TAOCPP_PEGTL_STRING("rcx"),
+      TAOCPP_PEGTL_STRING("r8"),
+      TAOCPP_PEGTL_STRING("r9"),
+      TAOCPP_PEGTL_STRING("rbx"),
+      TAOCPP_PEGTL_STRING("rbp"),
+      TAOCPP_PEGTL_STRING("r10"),
+      TAOCPP_PEGTL_STRING("r11"),
+      TAOCPP_PEGTL_STRING("r12"),
+      TAOCPP_PEGTL_STRING("r13"),
+      TAOCPP_PEGTL_STRING("r14"),
+      TAOCPP_PEGTL_STRING("r15"),
+      TAOCPP_PEGTL_STRING("rsp")
+    >{};
+
+  struct Label:
+    pegtl::sor<
+      pegtl::seq<
+        pegtl::one<':'>,
+        name
+      >,
+      pegtl::seq<
+        pegtl::one<'@'>,
+        name
+      >
+    > {};
+
+  struct MemoryLocation:
+    pegtl::seq<
+      TAOCPP_PEGTL_STRING("mem"),
+      seps,
+      Register,
+      seps,
+      Number
+    >{};
+
   struct u:
     pegtl::sor<
       Register,
@@ -75,6 +137,12 @@ namespace L1 {
     pegtl::sor<
       Register,
       Number
+    >{};
+
+  struct Location:
+    pegtl::sor<
+      Register,
+      MemoryLocation
     >{};
   
   struct Value:
@@ -88,20 +156,6 @@ namespace L1 {
       Label,
       t
     >{};
-
-  struct Location:
-    pegtl::sor<
-      Register,
-      MemoryLocation
-    >{};
-
-  struct seps: 
-    pegtl::star< 
-      pegtl::sor< 
-        pegtl::ascii::space, 
-        comment 
-      > 
-    > {};
 
   struct one_item_op:
     pegtl::sor<
@@ -130,7 +184,7 @@ namespace L1 {
           pegtl::one<'>'>,
           pegtl::one<'>'>
         >
-      >
+      >,
       pegtl::one<'='>
     >{};
 
@@ -159,7 +213,7 @@ namespace L1 {
       pegtl::seq<
         pegtl::one<'<'>,
         pegtl::one<'='>
-      >
+      >,
       pegtl::one<'<'>,
       pegtl::one<'='>
     >{};
@@ -183,60 +237,6 @@ namespace L1 {
       pegtl::one<'@'>,
       name
     > {};
-
-  struct Number:
-    pegtl::seq<
-      pegtl::opt<
-        pegtl::sor<
-          pegtl::one<'-'>,
-          pegtl::one<'+'>
-        >
-      >,
-      pegtl::plus< 
-        pegtl::digit
-      >
-    >{};
-
-  struct Label:
-    pegtl::sor<
-      pegtl::seq<
-        pegtl::one<':'>,
-        name
-      >,
-      pegtl::seq<
-        pegtl::one<'@'>,
-        name
-      >
-    > {};
-
-  struct Register:
-    pegtl::sor<
-      TAOCPP_PEGTL_STRING("rdi"),
-      TAOCPP_PEGTL_STRING("rax"),
-      TAOCPP_PEGTL_STRING("rsi"),
-      TAOCPP_PEGTL_STRING("rdx"),
-      TAOCPP_PEGTL_STRING("rcx"),
-      TAOCPP_PEGTL_STRING("r8"),
-      TAOCPP_PEGTL_STRING("r9"),
-      TAOCPP_PEGTL_STRING("rbx"),
-      TAOCPP_PEGTL_STRING("rbp"),
-      TAOCPP_PEGTL_STRING("r10"),
-      TAOCPP_PEGTL_STRING("r11"),
-      TAOCPP_PEGTL_STRING("r12"),
-      TAOCPP_PEGTL_STRING("r13"),
-      TAOCPP_PEGTL_STRING("r14"),
-      TAOCPP_PEGTL_STRING("r15"),
-      TAOCPP_PEGTL_STRING("rsp"),
-    >{};
-
-  struct MemoryLocation:
-    pegtl::seq<
-      TAOCPP_PEGTL_STRING("mem"),
-      seps,
-      Register,
-      seps,
-      number
-    >{};
 
   struct Instruction_return : TAOCPP_PEGTL_STRING("return") {};
 
@@ -358,7 +358,7 @@ namespace L1 {
       pegtl::seq< pegtl::at<Instruction_operation1>, Instruction_operation1>,
       pegtl::seq< pegtl::at<Instruction_operation2>, Instruction_operation2>,
       pegtl::seq< pegtl::at<Instruction_cjump>, Instruction_cjump>,
-      pegtl::seq< pegtl::at<Instruction_save_cmp>, Instruction_save_cmp>
+      pegtl::seq< pegtl::at<Instruction_save_cmp>, Instruction_save_cmp>,
       pegtl::seq< pegtl::at<Instruction_goto>, Instruction_goto>,
       pegtl::seq< pegtl::at<Instruction_call>, Instruction_call>,
       pegtl::seq< pegtl::at<Instruction_call_print>, Instruction_call_print>,
@@ -426,11 +426,11 @@ namespace L1 {
 
   template<> struct action <function_name_rule> {
     template<typename Input>
-	  static void apply(const Input & in, Program & p) {
+	  static void apply(const Input & in, L1::Program & p) {
       if (p.entryPointLabel.empty()){
         p.entryPointLabel = in.string();
       } else {
-        L1::Function* newF = new Function();
+        L1::Function* newF = new L1::Function();
         newF->name = in.string();
         p.functions.push_back(newF);
       }
@@ -439,7 +439,7 @@ namespace L1 {
 
   template<> struct action <argument_number> {
     template<typename Input>
-	  static void apply(const Input & in, Program & p) {
+	  static void apply(const Input & in, L1::Program & p) {
       L1::Function* currentF = p.functions.back();
       currentF->arguments = std::stoll(in.string());
     }
@@ -447,7 +447,7 @@ namespace L1 {
 
   template<> struct action <local_number> {
     template<typename Input>
-	  static void apply(const Input & in, Program & p) {
+	  static void apply(const Input & in, L1::Program & p) {
       L1::Function* currentF = p.functions.back();
       currentF->locals = std::stoll(in.string());
     }
@@ -455,7 +455,7 @@ namespace L1 {
 
   template<> struct action <Number> {
     template<typename Input>
-	  static void apply(const Input & in, Program & p) {
+	  static void apply(const Input & in, L1::Program & p) {
       L1::Function* currentF = p.functions.back();
 
       L1::Number* n = new L1::Number(std::stoll(in.string()));
@@ -466,7 +466,7 @@ namespace L1 {
 
   template<> struct action <Label> {
     template<typename Input>
-    static void apply(const Input & in, Program & p) {
+    static void apply(const Input & in, L1::Program & p) {
       L1::Label* l = new L1::Label(in.string());
       parsed_items.push_back(l);
     }
@@ -474,7 +474,7 @@ namespace L1 {
 
   template<> struct action <Register> {
     template< typename Input >
-    static void apply( const Input & in, Program & p) {
+    static void apply( const Input & in, L1::Program & p) {
       std::string s = in.string();
       Architecture::RegisterID reg_id = Architecture::reg_from_string(s);
       L1::Register* r = new L1::Register(reg_id);
@@ -484,7 +484,7 @@ namespace L1 {
 
   template<> struct action <MemoryLocation> {
     template<typename Input>
-    static void apply(const Input & in, Program & p) {
+    static void apply(const Input & in, L1::Program & p) {
       L1::Number* n = parsed_items.back();
       parsed_items.pop_back();
       L1::Register* r = parsed_items.back();
@@ -496,7 +496,7 @@ namespace L1 {
 
   template<> struct action <MemoryLocation> {
     template<typename Input>
-    static void apply(const Input & in, Program & p) {
+    static void apply(const Input & in, L1::Program & p) {
       Architecture::OP opID = Architecture::OP_from_string(in.string());
       L1::Operation* op = new L1::Operation(opID);
       parsed_items.push_back(op);
@@ -505,7 +505,7 @@ namespace L1 {
 
   template<> struct action <Instruction_return> {
     template<typename Input>
-	  static void apply(const Input & in, Program & p) {
+	  static void apply(const Input & in, L1::Program & p) {
       L1::Function* currentF = p.functions.back();
       L1::Number* i = new L1::Instruction_ret();
       currentF->instructions.push_back(i);
@@ -514,7 +514,7 @@ namespace L1 {
 
   template<> struct action <Instruction_assignment> {
     template<typename Input>
-	  static void apply(const Input & in, Program & p) {
+	  static void apply(const Input & in, L1::Program & p) {
       L1::Function* currentF = p.functions.back();
 
       auto src = parsed_items.back();
@@ -531,7 +531,7 @@ namespace L1 {
   // operation with 1 item
   template<> struct action <Instruction_operation1> {
     template<typename Input>
-	  static void apply(const Input & in, Program & p) {
+	  static void apply(const Input & in, L1::Program & p) {
       L1::Function* currentF = p.functions.back();
 
       L1::Operation* op = parsed_items.back();
@@ -550,7 +550,7 @@ namespace L1 {
   // operation with 2 items
   template<> struct action <Instruction_operation2> {
     template<typename Input>
-	  static void apply(const Input & in, Program & p) {
+	  static void apply(const Input & in, L1::Program & p) {
       L1::Function* currentF = p.functions.back();
 
       auto left = parsed_items.back();
@@ -569,7 +569,7 @@ namespace L1 {
   // lea (3-ish items)
   template<> struct action <Instruction_operation3> {
     template<typename Input>
-	  static void apply(const Input & in, Program & p) {
+	  static void apply(const Input & in, L1::Program & p) {
       L1::Function* currentF = p.functions.back();
 
       L1::Number* factor = parsed_items.back();
@@ -591,7 +591,7 @@ namespace L1 {
 
   template<> struct action <Instruction_cjump> {
     template<typename Input>
-    static void apply(const Input & in, Program & p){
+    static void apply(const Input & in, L1::Program & p){
       L1::Function* currentF = p.functions.back();
 
       L1::Label* label = parsed_items.back();
@@ -611,7 +611,7 @@ namespace L1 {
 
   template<> struct action <Instruction_save_cmp> {
     template<typename Input>
-    static void apply(const Input & in, Program & p){
+    static void apply(const Input & in, L1::Program & p){
       L1::Function* currentF = p.functions.back();
 
       auto right = parsed_items.back();
@@ -631,7 +631,7 @@ namespace L1 {
 
   template<> struct action <Instruction_label> {
     template<typename Input>
-    static void apply(const Input & in, Program & p){
+    static void apply(const Input & in, L1::Program & p){
       L1::Function* currentF = p.functions.back();
 
       L1::Label* label = parsed_items.back();
@@ -645,7 +645,7 @@ namespace L1 {
 
   template<> struct action <Instruction_goto> {
     template<typename Input>
-    static void apply(const Input & in, Program & p){
+    static void apply(const Input & in, L1::Program & p){
       L1::Function* currentF = p.functions.back();
 
       L1::Label* label = parsed_items.back();
@@ -659,7 +659,7 @@ namespace L1 {
 
   template<> struct action <Instruction_call> {
     template<typename Input>
-	  static void apply(const Input & in, Program & p){
+	  static void apply(const Input & in, L1::Program & p){
       L1::Function* currentF = p.functions.back();
 
       L1::Number* num_args = parsed_items.back();
@@ -675,7 +675,7 @@ namespace L1 {
 
   template<> struct action <Instruction_call_print> {
     template<typename Input>
-	  static void apply(const Input & in, Program & p){
+	  static void apply(const Input & in, L1::Program & p){
       L1::Function* currentF = p.functions.back();
 
       parsed_items.pop_back();
@@ -688,7 +688,7 @@ namespace L1 {
 
   template<> struct action <Instruction_call_input> {
     template<typename Input>
-	  static void apply(const Input & in, Program & p){
+	  static void apply(const Input & in, L1::Program & p){
       L1::Function* currentF = p.functions.back();
 
       parsed_items.pop_back();
@@ -701,7 +701,7 @@ namespace L1 {
 
   template<> struct action <Instruction_call_allocate> {
     template< typename Input >
-	  static void apply( const Input & in, Program & p){
+	  static void apply( const Input & in, L1::Program & p){
       L1::Function* currentF = p.functions.back();
 
       parsed_items.pop_back();
@@ -714,7 +714,7 @@ namespace L1 {
 
   template<> struct action <Instruction_call_tensorError> {
     template<typename Input>
-	  static void apply(const Input & in, Program & p){
+	  static void apply(const Input & in, L1::Program & p){
       L1::Function* currentF = p.functions.back();
 
       L1::Number* arg = parsed_items.back();
@@ -737,7 +737,7 @@ namespace L1 {
      * Parse.
      */
     file_input<> fileInput(fileName);
-    Program p;
+    L1::Program p;
     parse<grammar, action>(fileInput, p);
 
     return p;
