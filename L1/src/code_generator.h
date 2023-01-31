@@ -6,7 +6,7 @@
 
 namespace Generator{
 
-  extern std::ofstream outputFile;
+  //extern std::ofstream outputFile;
 
   void generate_code(L1::Program p);
 
