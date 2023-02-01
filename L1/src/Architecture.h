@@ -11,8 +11,11 @@ namespace Architecture {
     CompareOP cmpOP_from_string(std::string cmpOP);
     OP OP_from_string(std::string op);
 
-    std::string to_string(RegisterID);
-    std::string to_string(CompareOP);
-    std::string to_string(OP);
+    std::string to_string(RegisterID r);
+    std::string to_string(CompareOP cmpOP);
+    std::string to_string(OP op);
 
+    std::string get_eight_bit(RegisterID r);
+    std::string get_cmp_instr(CompareOP cmpOP);
+    std::string get_op_instr(OP op);
 }

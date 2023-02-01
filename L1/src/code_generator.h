@@ -10,6 +10,10 @@ namespace Generator{
 
   void generate_code(L1::Program p);
 
+  void save_calle_saved_registers();
+  
+  void restore_calle_saved_registers();
+
   // w <- s
   void generate_assignment(L1::Register* r, L1::Number* n);
   void generate_assignment(L1::Register* r, L1::Label* label);
@@ -46,7 +50,7 @@ namespace Generator{
   void generate_return();
   // call u N
   void generate_call(L1::Register* r, L1::Number* n);
-  void generate_call(L1::Label* r, L1::Number* n);
+  void generate_call(L1::Label* label, L1::Number* n);
   // call print 1
   void generate_call_print();
   // call input 0
@@ -59,10 +63,6 @@ namespace Generator{
   void generate_op(L1::Register* r, Architecture::OP op, L1::NullItem* blank, L1::NullItem* blank2, L1::NullItem* blank3);
   // w @ w w E
   void generate_op(L1::Register* dst, Architecture::OP op, L1::Register* first, L1::Register* second, L1::Number* factor);
-
-  void save_calle_saved_registers(std::ofstream file);
-  
-  void restore_calle_saved_registers(std::ofstream file);
 
   class Assembly_visitor : public L1::Visitor {
     public:
@@ -81,7 +81,5 @@ namespace Generator{
       void visit(const L1::Function* fn) const;
       void visit(const L1::Program* p) const;
   };
-
-
 
 }

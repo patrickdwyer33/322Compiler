@@ -508,7 +508,9 @@ namespace Parser {
     template<typename Input>
 	  static void apply(const Input & in, L1::Program & p) {
       L1::Function* currentF = p.functions.back();
-      L1::Instruction_return* i = new L1::Instruction_return();
+      int64_t num_locals = currentF->locals;
+      L1::Number* num_locals_item = new L1::Number(num_locals);
+      L1::Instruction_return* i = new L1::Instruction_return(num_locals_item);
       currentF->instructions.push_back(i);
     }
   };

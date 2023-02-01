@@ -51,60 +51,108 @@ namespace Architecture {
 
     OP OP_from_string(std::string op) {
         return OP_from_string_map[op];
-    } 
+    }
+
+    std::unordered_map<RegisterID, std::string> string_from_reg_map = {
+        {RegisterID::rdi, "rdi"},
+        {RegisterID::rax, "rax"},
+        {RegisterID::rsi, "rsi"},
+        {RegisterID::rdx, "rdx"},
+        {RegisterID::rcx, "rcx"},
+        {RegisterID::r8, "r8"},
+        {RegisterID::r9, "r9"},
+        {RegisterID::rbx, "rbx"},
+        {RegisterID::rbp, "rbp"},
+        {RegisterID::r10, "r10"},
+        {RegisterID::r11, "r11"},
+        {RegisterID::r12, "r12"},
+        {RegisterID::r13, "r13"},
+        {RegisterID::r14, "r14"},
+        {RegisterID::r15, "r15"},
+        {RegisterID::rsp, "rsp"}
+    }
 
     std::string to_string(Architecture::RegisterID r) {
-        std::string s;
-        switch(r) {
-            case RegisterID::rdi:
-                s = "rdi";
+        return string_from_reg_map[r];
+    }
+
+    std::unordered_map<CompareOP, std::string> string_from_cmpOP_map = {
+        {CompareOP::less_than, "<"},
+        {CompareOP::less_than_or_equal, "<="},
+        {CompareOP::equal, "="}
+    };
+
+    std::string to_string(Architecture::CompareOP cmpOP) {
+        return string_from_cmpOP_map[cmpOP];
+    }
+
+    std::unordered_map<std::string, OP> string_from_OP_map = {
+        {OP::plus_plus, "++"},
+        {OP::minus_minus, "--"},
+        {OP::plus_equals, "+="},
+        {OP::minus_equals, "--"},
+        {OP::minus_equals, "-="},
+        {OP::multiply_equals, "*="},
+        {OP::and_equals, "&="},
+        {OP::lea, "@"},
+        {OP::shift_left, "<<="},
+        {OP::shift_right, ">>="}
+    };
+
+    std::string to_string(Architecture::OP cmpOP) {
+        return string_from_OP_map[op];
+    }
+
+    std::unordered_map<Architecture::RegisterID r, std::string> instr_from_reg_map = {
+        {RegisterID::rdi, "dil"},
+        {RegisterID::rax, "al"},
+        {RegisterID::rsi, "sil"},
+        {RegisterID::rdx, "dl"},
+        {RegisterID::rcx, "cl"},
+        {RegisterID::r8, "r8b"},
+        {RegisterID::r9, "r9b"},
+        {RegisterID::rbx, "bl"},
+        {RegisterID::rbp, "bpl"},
+        {RegisterID::r10, "r10b"},
+        {RegisterID::r11, "r11b"},
+        {RegisterID::r12, "r12b"},
+        {RegisterID::r13, "r13b"},
+        {RegisterID::r14, "r14b"},
+        {RegisterID::r15, "r15b"},
+        {RegisterID::rsp, "rsp"}
+    }
+
+    std::string get_eight_bit(Architecture::RegisterID r) {
+        
+    }
+
+    std::pair<std::string, bool> get_op_instr(CompareOP raw_op) {
+        std::string instruction;
+        bool to_shift = false;
+        switch (raw_op) {
+            case Architecture::OP::plus_equals:
+                instruction = "addq";
                 break;
-            case RegisterID::rax:
-                s = "rax";
+            case Architecture::OP::minus_equals:
+                instruction = "subq";
                 break;
-            case RegisterID::rsi:
-                s = "rsi";
+            case Architecture::OP::multiply_equals:
+                instruction = "imulq";
                 break;
-            case RegisterID::rdx:
-                s = "rdx";
+            case Architecture::OP::and_equals:
+                instruction = "andq";
                 break;
-            case RegisterID::rcx:
-                s = "rcx";
+            case Architecture::OP::shift_left:
+                instruction = "salq";
+                to_shift = true;
                 break;
-            case RegisterID::r8:
-                s = "r8";
+            case Architecture::OP::shift_right:
+                instruction = "sarq";
+                to_shift = true;
                 break;
-            case RegisterID::r9:
-                s = "r9";
-                break;
-            case RegisterID::rbx:
-                s = "rbx";
-                break;
-            case RegisterID::rbp:
-                s = "rbp";
-                break;
-            case RegisterID::r10:
-                s = "r10";
-                break;
-            case RegisterID::r11:
-                s = "r11";
-                break;
-            case RegisterID::r12:
-                s = "r12";
-                break;
-            case RegisterID::r13:
-                s = "r13";
-                break;
-            case RegisterID::r14:
-                s = "r14";
-                break;
-            case RegisterID::r15:
-                s = "r15";
-                break;
-            case RegisterID::rsp:
-                s = "rsp";
-                break;
+            default:
+                std::sterr << "ERROR in generate_op r1 <- r2" << std::endl;
         }
-        return s;
+        return std::make_pair(instruction, to_shift);
     }
 }

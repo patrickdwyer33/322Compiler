@@ -127,7 +127,8 @@ namespace L1 {
   std::string InstructionOffset = "\t\t";
 
   // Instruction_return
-  Instruction_return::Instruction_return() {
+  Instruction_return::Instruction_return(Item* num_locals) {
+    num_locals = num_locals;
     return;
   }
 
@@ -138,6 +139,10 @@ namespace L1 {
   void Instruction_return::accept(Visitor* v) const {
     v->visit(this);
     return;
+  }
+
+  Item* Instruction_return::get() const {
+    return num_locals;
   }
 
   // Instruction_assignment
@@ -152,6 +157,11 @@ namespace L1 {
   void Instruction_assignment::accept(Visitor* v) const {
     v->visit(this);
     return;
+  }
+
+  std::vector<Item*> Instruction_assignment::get() const {
+    std::vector<Item*> vec = {dst, src};
+    return vec;
   }
 
   // Instruction_operation
@@ -172,6 +182,11 @@ namespace L1 {
     return;
   }
 
+  std::vector<Item*> Instruction_operation::get() const {
+    std::vector<Item*> vec = {left, OP, right, lea_reg, factor};
+    return vec;
+  }
+
   // Instruction_cjump
   Instruction_cjump::Instruction_cjump(Item* left, Item* cmpOP, Item* right, Item* label) {
     OP = cmpOP;
@@ -187,6 +202,11 @@ namespace L1 {
   void Instruction_cjump::accept(Visitor* v) const {
     v->visit(this);
     return;
+  }
+
+  std::vector<Item*> Instruction_cjump::get() const {
+    std::vector<Item*> vec = {left, OP, right, label};
+    return vec;
   }
 
   // Instruction_save_cmp
@@ -206,6 +226,11 @@ namespace L1 {
     return;
   }
 
+  std::vector<Item*> Instruction_save_cmp::get() const {
+    std::vector<Item*> vec = {dst, left, OP, right};
+    return vec;
+  }
+
   // Instruction_label
   Instruction_label::Instruction_label(Item* label) {
     label = label;
@@ -219,6 +244,10 @@ namespace L1 {
   void Instruction_label::accept(Visitor* v) const {
     v->visit(this);
     return;
+  }
+
+  Item* Instruction_label::get() const {
+    return label;
   }
 
   // Instruction_goto
@@ -236,6 +265,10 @@ namespace L1 {
     return;
   }
 
+  Item* Instruction_goto::get() const {
+    return label;
+  }
+
   // Instruction_call
   Instruction_call::Instruction_call(Item* fn, Item* arg) {
     fn = fn;
@@ -250,6 +283,11 @@ namespace L1 {
   void Instruction_call::accept(Visitor* v) const {
     v->visit(this);
     return;
+  }
+
+  std::vector<Item*> Instruction_call::get() const {
+    std::vector<Item*> vec = {fn, arg};
+    return vec;
   }
 
   // Instruction_call_print
@@ -307,6 +345,10 @@ namespace L1 {
   void Instruction_call_tensorError::accept(Visitor* v) const {
     v->visit(this);
     return;
+  }
+
+  Item* Instruction_call::get() const {
+    return arg;
   }
 
   void Function::to_string() const {

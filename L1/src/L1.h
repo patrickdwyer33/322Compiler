@@ -96,9 +96,12 @@ namespace L1 {
    */
   class Instruction_return : public Instruction {
     public:
-      Instruction_return();
+      Instruction_return(Item* num_locals);
       std::string to_string() const override;
       void accept(Visitor* v) const;
+      Item* get() const;
+    private:
+      Item* num_locals;
   };
 
   class Instruction_assignment : public Instruction {
@@ -106,9 +109,10 @@ namespace L1 {
       Instruction_assignment(Item* dst, Item* src);
       std::string to_string() const override;
       void accept(Visitor* v) const;
+      std::vector<Item*> get() const;
     private:
-      Item* src;
       Item* dst;
+      Item* src;
   };
 
   class Instruction_operation : public Instruction{
@@ -116,9 +120,10 @@ namespace L1 {
       Instruction_operation(Item* left, Item* op, Item* right, Item* lea_reg, Item* factor);
       std::string to_string() const override;
       void accept(Visitor* v) const;
+      std::vector<Item*> get() const;
     private:
-      Item* OP;
       Item* left;
+      Item* OP;
       Item* right;
       Item* lea_reg;
       Item* factor;
@@ -129,9 +134,10 @@ namespace L1 {
       Instruction_cjump(Item* left, Item* cmpOP, Item* right, Item* label);
       std::string to_string() const override;
       void accept(Visitor* v) const;
+      std::vector<Item*> get() const;
     private:
-      Item* OP;
       Item* left;
+      Item* OP;
       Item* right;
       Item* label;
   };
@@ -141,10 +147,11 @@ namespace L1 {
       Instruction_save_cmp(Item* dst, Item* left, Item* cmpOP, Item* right);
       std::string to_string() const override;
       void accept(Visitor* v) const;
+      std::vector<Item*> get() const;
     private:
       Item* dst;
-      Item* OP;
       Item* left;
+      Item* OP;
       Item* right;
   };
 
@@ -153,6 +160,7 @@ namespace L1 {
       Instruction_label(Item* label);
       std::string to_string() const override;
       void accept(Visitor* v) const;
+      Item* get() const;
     private:
       Item* label;
   };
@@ -162,6 +170,7 @@ namespace L1 {
       Instruction_goto(Item* label);
       std::string to_string() const override;
       void accept(Visitor* v) const;
+      Item* get() const;
     private:
       Item* label;
   };
@@ -171,6 +180,7 @@ namespace L1 {
       Instruction_call(Item* fn, Item* arg);
       std::string to_string() const override;
       void accept(Visitor* v) const;
+      std::vector<Item*> get() const;
     private:
       Item* fn;
       Item* arg;
@@ -202,6 +212,7 @@ namespace L1 {
       Instruction_call_tensorError(Item* arg);
       std::string to_string() const override;
       void accept(Visitor* v) const;
+      Item* get() const;
     private:
       Item* arg;
   };
