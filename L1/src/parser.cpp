@@ -487,10 +487,12 @@ namespace Parser {
     template<typename Input>
     static void apply(const Input & in, L1::Program & p) {
       auto n = parsed_items.back();
+      L1::Number* real_n = (L1::Number*)n;
       parsed_items.pop_back();
       auto r = parsed_items.back();
+      L1::Register* real_r = (L1::Register*)r;
       parsed_items.pop_back();
-      L1::MemoryLocation* mem = new L1::MemoryLocation(r, n);
+      L1::MemoryLocation* mem = new L1::MemoryLocation(real_r, real_n);
       parsed_items.push_back(mem);
     }
   };

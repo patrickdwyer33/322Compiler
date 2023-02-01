@@ -29,7 +29,7 @@ namespace Generator{
   void generate_op(L1::Register* r, L1::Operation* op, L1::Number* n, L1::NullItem* blank, L1::NullItem* blank2);
   // mem x M += t, mem x M -= t
   void generate_op(L1::MemoryLocation* mem, L1::Operation* op, L1::Register* r, L1::NullItem* blank, L1::NullItem* blank2);
-  void generate_op(L1::MemoryLocation* mem, L1::Operation* op, L1::Number* r, L1::NullItem* blank, L1::NullItem* blank2);
+  void generate_op(L1::MemoryLocation* mem, L1::Operation* op, L1::Number* n, L1::NullItem* blank, L1::NullItem* blank2);
   // w += mem x M, w -= mem x M
   void generate_op(L1::Register* r, L1::Operation* op, L1::MemoryLocation mem, L1::NullItem blank, L1::NullItem* blank2);
   // w <- t cmp t

@@ -70,7 +70,7 @@ namespace L1 {
   }
 
   // MemoryLocation
-  MemoryLocation::MemoryLocation(Item* base, Item* off) {
+  MemoryLocation::MemoryLocation(Register* base, Number* off) {
     base_register = base;
     off = offset;
     return;
@@ -80,7 +80,7 @@ namespace L1 {
     return "\t\t\tMemoryLocation:\n\t" + base_register->to_string() + "\t" + offset->to_string();
   }
 
-  std::pair<Item*, Item*> MemoryLocation::get() const {
+  std::pair<Register*, Number*> MemoryLocation::get() const {
     return std::make_pair(base_register, offset);
   }
 
@@ -347,7 +347,7 @@ namespace L1 {
     return;
   }
 
-  Item* Instruction_call::get() const {
+  Item* Instruction_call_tensorError::get() const {
     return arg;
   }
 

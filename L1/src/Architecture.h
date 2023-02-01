@@ -17,5 +17,5 @@ namespace Architecture {
 
     std::string get_eight_bit(RegisterID r);
     std::string get_cmp_instr(CompareOP cmpOP);
-    std::string get_op_instr(OP op);
+    std::pair<std::string, bool> get_op_instr(OP op);
 }

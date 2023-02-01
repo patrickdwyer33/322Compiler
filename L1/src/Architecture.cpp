@@ -70,7 +70,7 @@ namespace Architecture {
         {RegisterID::r14, "r14"},
         {RegisterID::r15, "r15"},
         {RegisterID::rsp, "rsp"}
-    }
+    };
 
     std::string to_string(Architecture::RegisterID r) {
         return string_from_reg_map[r];
@@ -86,11 +86,10 @@ namespace Architecture {
         return string_from_cmpOP_map[cmpOP];
     }
 
-    std::unordered_map<std::string, OP> string_from_OP_map = {
+    std::unordered_map<OP, std::string> string_from_OP_map = {
         {OP::plus_plus, "++"},
         {OP::minus_minus, "--"},
         {OP::plus_equals, "+="},
-        {OP::minus_equals, "--"},
         {OP::minus_equals, "-="},
         {OP::multiply_equals, "*="},
         {OP::and_equals, "&="},
@@ -99,11 +98,11 @@ namespace Architecture {
         {OP::shift_right, ">>="}
     };
 
-    std::string to_string(Architecture::OP cmpOP) {
+    std::string to_string(Architecture::OP op) {
         return string_from_OP_map[op];
     }
 
-    std::unordered_map<Architecture::RegisterID r, std::string> instr_from_reg_map = {
+    std::unordered_map<Architecture::RegisterID, std::string> instr_from_reg_map = {
         {RegisterID::rdi, "dil"},
         {RegisterID::rax, "al"},
         {RegisterID::rsi, "sil"},
@@ -120,39 +119,40 @@ namespace Architecture {
         {RegisterID::r14, "r14b"},
         {RegisterID::r15, "r15b"},
         {RegisterID::rsp, "rsp"}
-    }
+    };
 
     std::string get_eight_bit(Architecture::RegisterID r) {
-        
+        return instr_from_reg_map[r];
     }
 
-    std::pair<std::string, bool> get_op_instr(CompareOP raw_op) {
-        std::string instruction;
-        bool to_shift = false;
-        switch (raw_op) {
-            case Architecture::OP::plus_equals:
-                instruction = "addq";
-                break;
-            case Architecture::OP::minus_equals:
-                instruction = "subq";
-                break;
-            case Architecture::OP::multiply_equals:
-                instruction = "imulq";
-                break;
-            case Architecture::OP::and_equals:
-                instruction = "andq";
-                break;
-            case Architecture::OP::shift_left:
-                instruction = "salq";
-                to_shift = true;
-                break;
-            case Architecture::OP::shift_right:
-                instruction = "sarq";
-                to_shift = true;
-                break;
-            default:
-                std::sterr << "ERROR in generate_op r1 <- r2" << std::endl;
-        }
-        return std::make_pair(instruction, to_shift);
+    std::unordered_map<CompareOP, std::string> instr_from_cmp_map = {
+        {CompareOP::less_than, "l"},
+        {CompareOP::less_than_or_equal, "le"},
+        {CompareOP::equal, "e"}
+    };
+
+    std::string get_cmp_instr(Architecture::CompareOP cmpOP) {
+        return instr_from_cmp_map[cmpOP];
     }
+
+    std::unordered_map<OP, std::string> instr_from_op_map = {
+        {OP::plus_plus, "inc"},
+        {OP::minus_minus, "dec"},
+        {OP::plus_equals, "addq"},
+        {OP::minus_equals, "subq"},
+        {OP::multiply_equals, "imulq"},
+        {OP::and_equals, "andq"},
+        {OP::lea, "lea"},
+        {OP::shift_left, "salq"},
+        {OP::shift_right, "sarq"}
+    };
+
+    std::pair<std::string, bool> get_op_instr(Architecture::OP op) {
+        bool to_shift = false;
+        if (op == OP::shift_left || op == OP::shift_right) {
+            to_shift = true;
+        }
+        return std::make_pair(instr_from_op_map[op], to_shift);
+    }
+
 }

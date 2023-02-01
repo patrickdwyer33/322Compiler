@@ -2,6 +2,7 @@
 #include <iostream>
 #include <fstream>
 #include <L1.h>
+#include <typeinfo>
 
 #include <code_generator.h>
 
@@ -12,6 +13,14 @@ namespace Generator {
   std::ofstream outputFile;
 
   Assembly_visitor* generator;
+
+  std::string NullItemName = "asdf";
+  std::string NumberName = "asdf";
+  std::string LabelName = "asdf";
+  std::string RegisterName = "asdf";
+  std::string MemoryLocationName = "asdf";
+  std::string OperationName = "asdf";
+  std::string CmpOperationName = "asdf";
 
   void generate_code(L1::Program p) {
 
@@ -67,34 +76,34 @@ namespace Generator {
     return;
   }
   // w <- mem x M
-  void generate_assignment(L1::Register* r, L1::MemoryLocation mem) {
+  void generate_assignment(L1::Register* r, L1::MemoryLocation* mem) {
     auto mem_info = mem->get();
-    outputFile << "\t\tmovq " << std::to_string(mem_info[1]->get())<< "(%" << Architecture::to_string(mem_info[0]->get()) << ") %" << Architecture::to_string(r->get()) << std::endl;
+    outputFile << "\t\tmovq " << std::to_string(std::get<1>(mem_info)->get())<< "(%" << Architecture::to_string(std::get<0>(mem_info)->get()) << ") %" << Architecture::to_string(r->get()) << std::endl;
     return;
   }
   // mem x M <- s
-  void generate_assignment(L1::MemoryLocation mem, L1::Number* n) {
+  void generate_assignment(L1::MemoryLocation* mem, L1::Number* n) {
     auto mem_info = mem->get();
-    outputFile << "\t\tmovq $" << std::to_string(n->get()) << ", " << std::to_string(mem_info[1]->get())<< "(%" << Architecture::to_string(mem_info[0]->get()) << ")" << std::endl;
+    outputFile << "\t\tmovq $" << std::to_string(n->get()) << ", " << std::to_string(std::get<1>(mem_info)->get())<< "(%" << Architecture::to_string(std::get<0>(mem_info)->get()) << ")" << std::endl;
     return;
   }
-  void generate_assignment(L1::MemoryLocation mem, L1::Label* label) {
+  void generate_assignment(L1::MemoryLocation* mem, L1::Label* label) {
     auto mem_info = mem->get();
-    outputFile << "\t\tmovq $_" << label->get().substr(1) << ", " << std::to_string(mem_info[1]->get())<< "(%" << Architecture::to_string(mem_info[0]->get()) << ")" << std::endl;
+    outputFile << "\t\tmovq $_" << label->get().substr(1) << ", " << std::to_string(std::get<1>(mem_info)->get())<< "(%" << Architecture::to_string(std::get<0>(mem_info)->get()) << ")" << std::endl;
     return;
   }
-  void generate_assignment(L1::MemoryLocation mem, L1::Register* r) {
+  void generate_assignment(L1::MemoryLocation* mem, L1::Register* r) {
     auto mem_info = mem->get();
-    outputFile << "\t\tmovq %" << Architecture::to_string(r->get()) << ", " << std::to_string(mem_info[1]->get())<< "(%" << Architecture::to_string(mem_info[0]->get()) << ")" << std::endl;
+    outputFile << "\t\tmovq %" << Architecture::to_string(r->get()) << ", " << std::to_string(std::get<1>(mem_info)->get())<< "(%" << Architecture::to_string(std::get<0>(mem_info)->get()) << ")" << std::endl;
     return;
   }
   // w aop t, w sop sx, w sop N
   void generate_op(L1::Register* r1, L1::Operation* op, L1::Register* r2, L1::NullItem* blank, L1::NullItem* blank2) {
     auto op_info = Architecture::get_op_instr(op->get());
-    std::string instruction = op_info[0];
-    bool is_shift = op_info[1];
+    std::string instruction = std::get<0>(op_info);
+    bool is_shift = std::get<1>(op_info);
     outputFile << "\t\t" << instruction << " %";
-    if (to_shift) {
+    if (is_shift) {
       outputFile << Architecture::get_eight_bit(r2->get());
     } else {
       outputFile << Architecture::to_string(r2->get());
@@ -104,7 +113,7 @@ namespace Generator {
   }
   void generate_op(L1::Register* r, L1::Operation* op, L1::Number* n, L1::NullItem* blank, L1::NullItem* blank2) {
     auto op_info = Architecture::get_op_instr(op->get());
-    std::string instruction = op_info[0];
+    std::string instruction = std::get<0>(op_info);
     outputFile << "\t\t" << instruction << " $" << std::to_string(n->get());
     outputFile << ", %" << Architecture::to_string(r->get()) << std::endl;
     return;
@@ -113,23 +122,23 @@ namespace Generator {
   void generate_op(L1::MemoryLocation* mem, L1::Operation* op, L1::Register* r, L1::NullItem* blank, L1::NullItem* blank2) {
     auto op_info = Architecture::get_op_instr(op->get());
     auto mem_info = mem->get();
-    std::string instruction = op_info[0];
-    outputFile << "\t\t" << instruction << " %" << Architecture::to_string(r->get()) << ", %" << std::to_string(mem_info[1]) << "(" << Architecture::to_string(mem_info[0]) << ")" << std::endl;
+    std::string instruction = std::get<0>(op_info);
+    outputFile << "\t\t" << instruction << " %" << Architecture::to_string(r->get()) << ", %" << std::to_string(std::get<1>(mem_info)->get()) << "(" << Architecture::to_string(std::get<0>(mem_info)->get()) << ")" << std::endl;
     return;
   }
   void generate_op(L1::MemoryLocation* mem, L1::Operation* op, L1::Number* n, L1::NullItem* blank, L1::NullItem* blank2) {
     auto op_info = Architecture::get_op_instr(op->get());
     auto mem_info = mem->get();
-    std::string instruction = op_info[0];
-    outputFile << "\t\t" << instruction << " $" << std::to_string(n->get()) << ", %" << std::to_string(mem_info[1]) << "(" << Architecture::to_string(mem_info[0]) << ")" << std::endl;
+    std::string instruction = std::get<0>(op_info);
+    outputFile << "\t\t" << instruction << " $" << std::to_string(n->get()) << ", %" << std::to_string(std::get<1>(mem_info)->get()) << "(" << Architecture::to_string(std::get<0>(mem_info)->get()) << ")" << std::endl;
     return;
   }
   // w += mem x M, w -= mem x M
-  void generate_op(L1::Register* r, L1::Operation* op, L1::MemoryLocation mem, L1::NullItem blank, L1::NullItem* blank2) {
+  void generate_op(L1::Register* r, L1::Operation* op, L1::MemoryLocation* mem, L1::NullItem* blank, L1::NullItem* blank2) {
     auto op_info = Architecture::get_op_instr(op->get());
     auto mem_info = mem->get();
-    std::string instruction = op_info[0];
-    outputFile << "\t\t" << instruction << " %" << std::to_string(mem_info[1]) << "(" << Architecture::to_string(mem_info[0]) << ")" << ", %" << Architecture::to_string(r->get()) << std::endl;
+    std::string instruction = std::get<0>(op_info);
+    outputFile << "\t\t" << instruction << " %" << std::to_string(std::get<1>(mem_info)->get()) << "(" << Architecture::to_string(std::get<0>(mem_info)->get()) << ")" << ", %" << Architecture::to_string(r->get()) << std::endl;
     return;
   }
   // w <- t cmp t
@@ -163,7 +172,7 @@ namespace Generator {
         comparison_result = n1->get() <= n2->get();
         break;
       default:
-        std::sterr << "ERROR in generate_save_cmp n1 cmp n2" << std::endl;
+        std::cerr << "ERROR in generate_save_cmp n1 cmp n2" << std::endl;
     }
     int to_store = (int)comparison_result;
     outputFile << "\t\tmovq $" << std::to_string(to_store) << ", %" << Architecture::to_string(dst->get()) << std::endl;
@@ -198,7 +207,7 @@ namespace Generator {
         comparison_result = n1->get() <= n2->get();
         break;
       default:
-        std::sterr << "ERROR in generate_save_cmp n1 cmp n2" << std::endl;
+        std::cerr << "ERROR in generate_save_cmp n1 cmp n2" << std::endl;
     }
     if (comparison_result) {
       outputFile << "\t\tjmp _" << label->get().substr(1) << std::endl;
@@ -223,12 +232,12 @@ namespace Generator {
   }
   // call u N
   void generate_call(L1::Register* r, L1::Number* n) {
-    outputFile << "\t\tsubq $" << std::to_string(8 + (8 * std::max(0, (n->get() - 6)))) << ", %rsp" << std::endl;
+    outputFile << "\t\tsubq $" << std::to_string(8 + (8 * std::max(0, ((int)n->get() - 6)))) << ", %rsp" << std::endl;
     outputFile << "\t\tjmp *%" << Architecture::to_string(r->get()) << std::endl;
     return;
   }
   void generate_call(L1::Label* label, L1::Number* n) {
-    outputFile << "subq $" << std::to_string(8 + (8 * std::max(0, (n->get() - 6)))) << ", %rsp" << std::endl;
+    outputFile << "subq $" << std::to_string(8 + (8 * std::max(0, ((int)n->get() - 6)))) << ", %rsp" << std::endl;
     outputFile << "\t\tjmp _" << label->get().substr(1) << std::endl;
     return;
   }
@@ -249,7 +258,7 @@ namespace Generator {
   }
   // call tensor-error F
   void generate_call_tensorError(L1::Number* n) {
-    auto arg = n->get()
+    auto arg = n->get();
     outputFile << "\t\tcall ";
     switch (arg) {
       case 1:
@@ -266,29 +275,121 @@ namespace Generator {
     return;
   }
   // w ++, w --
-  void generate_op(L1::Register* r, Architecture::OP op, L1::NullItem* blank, L1::NullItem* blank2, L1::NullItem* blank3) {
-    outputFile << "\t\t" << Architecture::get_op_instr(op->get()) << " %" << Architecture::to_string(r->get()) << std::endl;
+  void generate_op(L1::Register* r, L1::Operation* op, L1::NullItem* blank, L1::NullItem* blank2, L1::NullItem* blank3) {
+    outputFile << "\t\t" << std::get<0>(Architecture::get_op_instr(op->get())) << " %" << Architecture::to_string(r->get()) << std::endl;
     return;
   }
   // w @ w w E
-  void generate_op(L1::Register* dst, Architecture::OP op, L1::Register* first, L1::Register* second, L1::Number* factor) {
+  void generate_op(L1::Register* dst, L1::Operation* op, L1::Register* first, L1::Register* second, L1::Number* factor) {
     outputFile << "\t\tlea (%" << Architecture::to_string(first->get()) << ", %" << Architecture::to_string(second->get()) << ", " << std::to_string(factor->get()) << "), %" << Architecture::to_string(dst->get()) << std::endl;
     return;
   }
 
   void Assembly_visitor::visit(const L1::Instruction_return* i) const {
     auto instr_data = i->get();
-    generate_return(instr_data);
+    auto type_name = typeid(*instr_data).name();
+    if (type_name != NumberName) {
+      std::cerr << "ERROR in visit Instruction_return."<< std::endl;
+    }
+    L1::Number* n = (L1::Number*)instr_data;
+    generate_return(n);
     return;
   }
   void Assembly_visitor::visit(const L1::Instruction_assignment* i) const {
     auto instr_data = i->get();
-    generate_assignment(instr_data[0], instr_data[1]);
+    auto type_name_1 = typeid(*instr_data[0]).name();
+    auto type_name_2 = typeid(*instr_data[1]).name();
+    if (type_name_1 == RegisterName && type_name_2 == NumberName) {
+      L1::Register* r = (L1::Register*)instr_data[0];
+      L1::Number* n = (L1::Number*)instr_data[1];
+      generate_assignment(r, n);
+    } else if (type_name_1 == RegisterName && type_name_2 == LabelName) {
+      L1::Register* r = (L1::Register*)instr_data[0];
+      L1::Label* label = (L1::Label*)instr_data[1];
+      generate_assignment(r, label);
+    } else if (type_name_1 == RegisterName && type_name_2 == RegisterName) {
+      L1::Register* r1 = (L1::Register*)instr_data[0];
+      L1::Register* r2 = (L1::Register*)instr_data[1];
+      generate_assignment(r1, r2);
+    } else if (type_name_1 == RegisterName && type_name_2 == MemoryLocationName) {
+      L1::Register* r = (L1::Register*)instr_data[0];
+      L1::MemoryLocation* m = (L1::MemoryLocation*)instr_data[1];
+      generate_assignment(r, m);
+    } else if (type_name_1 == MemoryLocationName && type_name_2 == NumberName) {
+      L1::MemoryLocation* m = (L1::MemoryLocation*)instr_data[0];
+      L1::Number* n = (L1::Number*)instr_data[1];
+      generate_assignment(m, n);
+    } else if (type_name_1 == MemoryLocationName && type_name_2 == LabelName) {
+      L1::MemoryLocation* m = (L1::MemoryLocation*)instr_data[0];
+      L1::Label* label = (L1::Label*)instr_data[1];
+      generate_assignment(m, label);
+    } else if (type_name_1 == MemoryLocationName && type_name_2 == RegisterName) {
+      L1::MemoryLocation* m = (L1::MemoryLocation*)instr_data[0];
+      L1::Register* r = (L1::Register*)instr_data[1];
+      generate_assignment(m, r);
+    } else {
+      std::cerr << "ERROR in visit Instruction_assignment" << std::endl;
+    }
+
     return;
   }
   void Assembly_visitor::visit(const L1::Instruction_operation* i) const {
     auto instr_data = i->get();
-    generate_op(instr_data[0], instr_data[1], instr_data[2], instr_data[3], instr_data[4]);
+    auto type_name_1 = typeid(*instr_data[0]).name();
+    auto type_name_2 = typeid(*instr_data[1]).name();
+    auto type_name_3 = typeid(*instr_data[2]).name();
+    auto type_name_4 = typeid(*instr_data[3]).name();
+    auto type_name_5 = typeid(*instr_data[4]).name();
+    if (type_name_1 == RegisterName && type_name_3 == RegisterName) {
+      L1::Register* r1 = (L1::Register*)instr_data[0];
+      L1::Operation* op = (L1::Operation*)instr_data[1];
+      L1::Register* r2 = (L1::Register*)instr_data[2];
+      L1::NullItem* empty1 = (L1::NullItem*)instr_data[3];
+      L1::NullItem* empty2 = (L1::NullItem*)instr_data[4];
+      generate_op(r1, op, r2, empty1, empty2);
+    } else if (type_name_1 == RegisterName && type_name_3 == NumberName) {
+      L1::Register* r = (L1::Register*)instr_data[0];
+      L1::Operation* op = (L1::Operation*)instr_data[1];
+      L1::Number* n = (L1::Number*)instr_data[2];
+      L1::NullItem* empty1 = (L1::NullItem*)instr_data[3];
+      L1::NullItem* empty2 = (L1::NullItem*)instr_data[4];
+      generate_op(r, op, n, empty1, empty2);
+    } else if (type_name_1 == MemoryLocationName && type_name_3 == RegisterName) {
+      L1::MemoryLocation* m = (L1::MemoryLocation*)instr_data[0];
+      L1::Operation* op = (L1::Operation*)instr_data[1];
+      L1::Register* r = (L1::Register*)instr_data[2];
+      L1::NullItem* empty1 = (L1::NullItem*)instr_data[3];
+      L1::NullItem* empty2 = (L1::NullItem*)instr_data[4];
+      generate_op(m, op, r, empty1, empty2);
+    } else if (type_name_1 == MemoryLocationName && type_name_3 == NumberName) {
+      L1::MemoryLocation* m = (L1::MemoryLocation*)instr_data[0];
+      L1::Operation* op = (L1::Operation*)instr_data[1];
+      L1::Number* n = (L1::Number*)instr_data[2];
+      L1::NullItem* empty1 = (L1::NullItem*)instr_data[3];
+      L1::NullItem* empty2 = (L1::NullItem*)instr_data[4];
+      generate_op(m, op, n, empty1, empty2);
+    } else if (type_name_1 == RegisterName && type_name_3 == MemoryLocationName) {
+      L1::Register* r = (L1::Register*)instr_data[0];
+      L1::Operation* op = (L1::Operation*)instr_data[1];
+      L1::MemoryLocation* m = (L1::MemoryLocation*)instr_data[2];
+      L1::NullItem* empty1 = (L1::NullItem*)instr_data[3];
+      L1::NullItem* empty2 = (L1::NullItem*)instr_data[4];
+      generate_op(r, op, m, empty1, empty2);
+    } else if (type_name_5 != NullItemName) {
+      L1::Register* dst = (L1::Register*)instr_data[0];
+      L1::Operation* op = (L1::Operation*)instr_data[1];
+      L1::Register* r1 = (L1::Register*)instr_data[2];
+      L1::Register* r2 = (L1::Register*)instr_data[3];
+      L1::Number* n = (L1::Number*)instr_data[4];
+      generate_op(dst, op, r1, r2, n);
+    } else {
+      L1::Register* r = (L1::Register*)instr_data[0];
+      L1::Operation* op = (L1::Operation*)instr_data[1];
+      L1::NullItem* empty1 = (L1::NullItem*)instr_data[2];
+      L1::NullItem* empty2 = (L1::NullItem*)instr_data[3];
+      L1::NullItem* empty3 = (L1::NullItem*)instr_data[4];
+      generate_op(r, op, empty1, empty2, empty3);
+    } 
     return;
   }
   void Assembly_visitor::visit(const L1::Instruction_cjump* i) const {
@@ -345,9 +446,9 @@ namespace Generator {
     return;
   }
 
-  void Assembly_visitor::visit(const L1::Function* f) {
-    outputFile << "@" << f->name.substr(1) << ":" << std::endl;
-    for (auto i: f->instructions) {
+  void Assembly_visitor::visit(const L1::Function* fn) const{
+    outputFile << "@" << fn->name.substr(1) << ":" << std::endl;
+    for (auto i: fn->instructions) {
       i->accept(generator);
     }
     return;

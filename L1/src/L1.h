@@ -50,13 +50,13 @@ namespace L1 {
 
   class MemoryLocation : public Item {
     public:
-      MemoryLocation(Item* r, Item* n);
+      MemoryLocation(Register* r, Number* n);
       std::string to_string() const override;
-      std::pair<Item*, Item*> get() const;
+      std::pair<Register*, Number*> get() const;
       bool operator == (const MemoryLocation &other) const;
     private:
-      Item* base_register;
-      Item* offset;
+      Register* base_register;
+      Number* offset;
   };
 
   class Operation : public Item {
