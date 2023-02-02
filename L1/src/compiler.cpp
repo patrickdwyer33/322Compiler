@@ -70,10 +70,7 @@ int main(
    * Print the source program.
    */
   if (verbose){
-    for (auto f : p.functions){
-      f->to_string();
-      std::cout << std::endl;
-    }
+    p.to_string();
   }
 
   /*

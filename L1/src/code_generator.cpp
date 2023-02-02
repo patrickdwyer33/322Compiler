@@ -14,7 +14,7 @@ namespace L1 {
 
   L1::Assembly_visitor g;
 
-  std::string NullItemName = "NullItem";
+  std::string NullItemName = "N2L18NullItemE";
   std::string NumberName = "N2L16NumberE";
   std::string LabelName = "N2L15LabelE";
   std::string RegisterName = "N2L18RegisterE";
@@ -78,7 +78,7 @@ namespace L1 {
     auto mem_info = mem->get();
     auto reg = static_cast<L1::Register*>(mem_info[0]);
     auto offset = static_cast<L1::Number*>(mem_info[1]);
-    outputFile << "\t\tmovq " << std::to_string(offset->get())<< "(%" << Architecture::to_string(reg->get()) << ") %" << Architecture::to_string(r->get()) << std::endl;
+    outputFile << "\t\tmovq " << std::to_string(offset->get())<< "(%" << Architecture::to_string(reg->get()) << "), %" << Architecture::to_string(r->get()) << std::endl;
     return;
   }
   // mem x M <- s
@@ -312,7 +312,6 @@ namespace L1 {
     return;
   }
   void Assembly_visitor::visit(L1::Instruction_assignment* i) {
-    std::cout << i->to_string() << std::endl;
     auto instr_data = i->get();
     auto type_name_1 = typeid(*instr_data[0]).name();
     auto type_name_2 = typeid(*instr_data[1]).name();

@@ -1,0 +1,15 @@
+(@go
+ (@go
+  0 0
+  rdi <- 1
+  call @add1 1
+  rdi <- rax
+  call print 1
+  return
+ )
+ (@add1
+  1 0
+  rax <- rdi
+  rax += 2
+  return)
+)

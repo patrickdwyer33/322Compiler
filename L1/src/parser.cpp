@@ -22,6 +22,8 @@
 #include <cstdlib>
 #include <stdint.h>
 #include <assert.h>
+#include <iostream>
+#include <typeinfo>
 
 #include <tao/pegtl.hpp>
 #include <tao/pegtl/analyze.hpp>
@@ -185,29 +187,32 @@ namespace Parser {
         pegtl::seq<
           pegtl::one<'>'>,
           pegtl::one<'>'>
-        >
-      >,
-      pegtl::one<'='>
+        >,
+        pegtl::one<'='>
+      >
     >{};
 
-  struct Lea:
+  struct lea:
+    pegtl::one<'@'>{};
+
+  struct operation:
+    pegtl::sor<
+      one_item_op,
+      two_item_op,
+      lea
+    >{};
+
+  struct Instruction_operation3:
     pegtl::seq<
       Register,
       seps,
-      pegtl::one<'@'>,
+      operation,
       seps,
       Register,
       seps,
       Register,
       seps,
       Number
-    >{};
-
-  struct Operation:
-    pegtl::sor<
-      one_item_op,
-      two_item_op,
-      Lea
     >{};
 
   struct cmp:
@@ -242,33 +247,36 @@ namespace Parser {
 
   struct Instruction_return : TAOCPP_PEGTL_STRING("return") {};
 
+  struct storable:
+    pegtl::sor<
+      s,
+      MemoryLocation
+    >{};
+
   struct Instruction_assignment:
     pegtl::seq<
       Location,
       seps,
       str_arrow,
       seps,
-      s
+      storable
     >{};
 
   struct Instruction_operation1:
     pegtl::seq<
       Register,
       seps,
-      one_item_op
+      operation
     >{};
 
   struct Instruction_operation2:
     pegtl::seq<
       Location,
       seps,
-      two_item_op,
+      operation,
       seps,
       Value
     >{};
-
-  struct Instruction_operation3:
-    Lea {};
 
   struct Instruction_cjump:
     pegtl::seq<
@@ -304,7 +312,8 @@ namespace Parser {
 
   struct Instruction_label:
     pegtl::seq<
-      Label
+      pegtl::one<':'>,
+      name
     >{};
 
   struct Instruction_call:
@@ -322,7 +331,7 @@ namespace Parser {
       seps,
       print_str,
       seps,
-      Number
+      pegtl::one<'1'>
     >{};
 
   struct Instruction_call_input:
@@ -331,7 +340,7 @@ namespace Parser {
       seps,
       input_str,
       seps,
-      Number
+      pegtl::one<'0'>
     >{};
 
   struct Instruction_call_allocate:
@@ -340,7 +349,7 @@ namespace Parser {
       seps,
       allocate_str,
       seps,
-      Number
+      pegtl::one<'2'>
     >{};
 
   struct Instruction_call_tensorError:
@@ -354,20 +363,18 @@ namespace Parser {
 
   struct Instruction_rule:
     pegtl::sor<
-      pegtl::seq< pegtl::at<Instruction_return>, Instruction_return>,
       pegtl::seq< pegtl::at<Instruction_save_cmp>, Instruction_save_cmp>,
       pegtl::seq< pegtl::at<Instruction_assignment>, Instruction_assignment>,
-      pegtl::seq< pegtl::at<Instruction_operation1>, Instruction_operation1>,
-      pegtl::seq< pegtl::at<Instruction_operation2>, Instruction_operation2>,
       pegtl::seq< pegtl::at<Instruction_operation3>, Instruction_operation3>,
+      pegtl::seq< pegtl::at<Instruction_operation2>, Instruction_operation2>,
       pegtl::seq< pegtl::at<Instruction_cjump>, Instruction_cjump>,
-      pegtl::seq< pegtl::at<Instruction_save_cmp>, Instruction_save_cmp>,
       pegtl::seq< pegtl::at<Instruction_goto>, Instruction_goto>,
       pegtl::seq< pegtl::at<Instruction_call>, Instruction_call>,
       pegtl::seq< pegtl::at<Instruction_call_print>, Instruction_call_print>,
       pegtl::seq< pegtl::at<Instruction_call_input>, Instruction_call_input>,
       pegtl::seq< pegtl::at<Instruction_call_allocate>, Instruction_call_allocate>,
       pegtl::seq< pegtl::at<Instruction_call_tensorError>, Instruction_call_tensorError>,
+      pegtl::seq< pegtl::at<Instruction_operation1>, Instruction_operation1>,
       pegtl::seq< pegtl::at<Instruction_label>, Instruction_label>
     > { };
 
@@ -380,7 +387,7 @@ namespace Parser {
       >
     > { };
 
-  struct Function_rule:
+  struct fn:
     pegtl::seq<
       seps,
       pegtl::one< '(' >,
@@ -393,8 +400,16 @@ namespace Parser {
       seps,
       Instructions_rule,
       seps,
+      Instruction_return,
+      seps,
       pegtl::one< ')' >
     > {};
+
+  struct Function_rule:
+    pegtl::seq<
+      pegtl::at<fn>,
+      fn
+    >{};
 
   struct Functions_rule:
     pegtl::plus<
@@ -499,12 +514,21 @@ namespace Parser {
     }
   };
 
-  template<> struct action <Operation> {
+  template<> struct action <operation> {
     template<typename Input>
     static void apply(const Input & in, L1::Program & p) {
       Architecture::OP opID = Architecture::OP_from_string(in.string());
       L1::Operation* op = new L1::Operation(opID);
       parsed_items.push_back(op);
+    }
+  };
+
+  template<> struct action <cmp> {
+    template<typename Input>
+    static void apply(const Input & in, L1::Program & p) {
+      Architecture::CompareOP cmpOPID = Architecture::cmpOP_from_string(in.string());
+      L1::CmpOperation* cmpOP = new L1::CmpOperation(cmpOPID);
+      parsed_items.push_back(cmpOP);
     }
   };
 
@@ -549,6 +573,8 @@ namespace Parser {
       L1::NullItem* emptyThing = new L1::NullItem();
       L1::NullItem* emptyThing2 = new L1::NullItem();
       L1::NullItem* emptyThing3 = new L1::NullItem();
+      auto test_name = typeid(*emptyThing).name();
+      std::cout << test_name << std::endl;
 
       L1::Instruction_operation* i = new L1::Instruction_operation(reg, op, emptyThing, emptyThing2, emptyThing3);
 
@@ -646,8 +672,7 @@ namespace Parser {
     static void apply(const Input & in, L1::Program & p){
       L1::Function* currentF = p.functions.back();
 
-      auto label = parsed_items.back();
-      parsed_items.pop_back();
+      L1::Label* label = new L1::Label(in.string());
 
       L1::Instruction_label* i = new L1::Instruction_label(label);
 
@@ -690,8 +715,6 @@ namespace Parser {
 	  static void apply(const Input & in, L1::Program & p){
       L1::Function* currentF = p.functions.back();
 
-      parsed_items.pop_back();
-
       L1::Instruction_call_print* i = new L1::Instruction_call_print();
 
       currentF->instructions.push_back(i);
@@ -703,8 +726,6 @@ namespace Parser {
 	  static void apply(const Input & in, L1::Program & p){
       L1::Function* currentF = p.functions.back();
 
-      parsed_items.pop_back();
-
       L1::Instruction_call_input* i = new L1::Instruction_call_input();
 
       currentF->instructions.push_back(i);
@@ -715,8 +736,6 @@ namespace Parser {
     template< typename Input >
 	  static void apply( const Input & in, L1::Program & p){
       L1::Function* currentF = p.functions.back();
-
-      parsed_items.pop_back();
 
       L1::Instruction_call_allocate* i = new L1::Instruction_call_allocate();
 
