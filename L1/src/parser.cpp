@@ -187,9 +187,9 @@ namespace Parser {
         pegtl::seq<
           pegtl::one<'>'>,
           pegtl::one<'>'>
-        >,
-        pegtl::one<'='>
-      >
+        >
+      >,
+      pegtl::one<'='>
     >{};
 
   struct lea:
@@ -206,7 +206,10 @@ namespace Parser {
     pegtl::seq<
       Register,
       seps,
-      operation,
+      pegtl::seq<
+        pegtl::at<lea>,
+        operation
+      >,
       seps,
       Register,
       seps,
@@ -221,8 +224,8 @@ namespace Parser {
         pegtl::one<'<'>,
         pegtl::one<'='>
       >,
-      pegtl::one<'<'>,
-      pegtl::one<'='>
+      pegtl::one<'='>,
+      pegtl::one<'<'>
     >{};
 
   struct str_arrow :
@@ -266,14 +269,20 @@ namespace Parser {
     pegtl::seq<
       Register,
       seps,
-      operation
+      pegtl::seq<
+        pegtl::at<one_item_op>,
+        operation
+      >
     >{};
 
   struct Instruction_operation2:
     pegtl::seq<
       Location,
       seps,
-      operation,
+      pegtl::seq<
+        pegtl::at<two_item_op>,
+        operation
+      >,
       seps,
       Value
     >{};
@@ -296,6 +305,7 @@ namespace Parser {
       Register,
       seps,
       str_arrow,
+      seps,
       t,
       seps,
       cmp,
@@ -375,7 +385,8 @@ namespace Parser {
       pegtl::seq< pegtl::at<Instruction_call_allocate>, Instruction_call_allocate>,
       pegtl::seq< pegtl::at<Instruction_call_tensorError>, Instruction_call_tensorError>,
       pegtl::seq< pegtl::at<Instruction_operation1>, Instruction_operation1>,
-      pegtl::seq< pegtl::at<Instruction_label>, Instruction_label>
+      pegtl::seq< pegtl::at<Instruction_label>, Instruction_label>,
+      pegtl::seq< pegtl::at<Instruction_return>, Instruction_return>
     > { };
 
   struct Instructions_rule:
@@ -387,7 +398,7 @@ namespace Parser {
       >
     > { };
 
-  struct fn:
+  struct Function_rule:
     pegtl::seq<
       seps,
       pegtl::one< '(' >,
@@ -400,15 +411,7 @@ namespace Parser {
       seps,
       Instructions_rule,
       seps,
-      Instruction_return,
-      seps,
       pegtl::one< ')' >
-    > {};
-
-  struct Function_rule:
-    pegtl::seq<
-      pegtl::at<fn>,
-      fn
     >{};
 
   struct Functions_rule:

@@ -128,7 +128,9 @@ namespace Architecture {
     std::unordered_map<CompareOP, std::string> instr_from_cmp_map = {
         {CompareOP::less_than, "l"},
         {CompareOP::less_than_or_equal, "le"},
-        {CompareOP::equal, "e"}
+        {CompareOP::equal, "e"},
+        {CompareOP::greater_than, "g"},
+        {CompareOP::greater_than_or_equal, "ge"}
     };
 
     std::string get_cmp_instr(Architecture::CompareOP cmpOP) {

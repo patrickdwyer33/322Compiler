@@ -66,7 +66,7 @@ namespace L1 {
     return;
   }
   void generate_assignment(L1::Register* r, L1::Label* label) {
-    outputFile << "\t\tmovq $" << label->get() << ", %" << Architecture::to_string(r->get()) << std::endl;
+    outputFile << "\t\tmovq $_" << label->get().substr(1) << ", %" << Architecture::to_string(r->get()) << std::endl;
     return;
   }
   void generate_assignment(L1::Register* r1, L1::Register* r2) {
@@ -131,7 +131,7 @@ namespace L1 {
     auto reg = static_cast<L1::Register*>(mem_info[0]);
     auto offset = static_cast<L1::Number*>(mem_info[1]);
     std::string instruction = std::get<0>(op_info);
-    outputFile << "\t\t" << instruction << " %" << Architecture::to_string(r->get()) << ", %" << std::to_string(offset->get()) << "(" << Architecture::to_string(reg->get()) << ")" << std::endl;
+    outputFile << "\t\t" << instruction << " %" << Architecture::to_string(r->get()) << ", " << std::to_string(offset->get()) << "(%" << Architecture::to_string(reg->get()) << ")" << std::endl;
     return;
   }
   void generate_op(L1::MemoryLocation* mem, L1::Operation* op, L1::Number* n, L1::NullItem* blank, L1::NullItem* blank2) {
@@ -140,7 +140,7 @@ namespace L1 {
     auto reg = static_cast<L1::Register*>(mem_info[0]);
     auto offset = static_cast<L1::Number*>(mem_info[1]);
     std::string instruction = std::get<0>(op_info);
-    outputFile << "\t\t" << instruction << " $" << std::to_string(n->get()) << ", %" << std::to_string(offset->get()) << "(" << Architecture::to_string(reg->get()) << ")" << std::endl;
+    outputFile << "\t\t" << instruction << " $" << std::to_string(n->get()) << ", " << std::to_string(offset->get()) << "(%" << Architecture::to_string(reg->get()) << ")" << std::endl;
     return;
   }
   // w += mem x M, w -= mem x M
@@ -150,7 +150,7 @@ namespace L1 {
     auto reg = static_cast<L1::Register*>(mem_info[0]);
     auto offset = static_cast<L1::Number*>(mem_info[1]);
     std::string instruction = std::get<0>(op_info);
-    outputFile << "\t\t" << instruction << " %" << std::to_string(offset->get()) << "(" << Architecture::to_string(reg->get()) << ")" << ", %" << Architecture::to_string(r->get()) << std::endl;
+    outputFile << "\t\t" << instruction << " " << std::to_string(offset->get()) << "(%" << Architecture::to_string(reg->get()) << ")" << ", %" << Architecture::to_string(r->get()) << std::endl;
     return;
   }
   // w <- t cmp t
@@ -167,7 +167,19 @@ namespace L1 {
     return;
   }
   void generate_save_cmp(L1::Register* dst, L1::Number* n, L1::CmpOperation* cmpOP, L1::Register* r) {
-    generate_save_cmp(dst, r, cmpOP, n);
+    auto raw_op = cmpOP->get();
+    switch (raw_op) {
+      case Architecture::CompareOP::less_than:
+        raw_op = Architecture::CompareOP::greater_than_or_equal;
+        break;
+      case Architecture::CompareOP::less_than_or_equal:
+        raw_op = Architecture::CompareOP::greater_than;
+        break;
+      default:
+        break;
+    }
+    auto new_cmpOP = new L1::CmpOperation(raw_op);
+    generate_save_cmp(dst, r, new_cmpOP, n);
     return;
   }
   void generate_save_cmp(L1::Register* dst, L1::Number* n1, L1::CmpOperation* cmpOP, L1::Number* n2) {
@@ -175,13 +187,13 @@ namespace L1 {
     bool comparison_result;
     switch (raw_op) {
       case Architecture::CompareOP::less_than:
-        comparison_result = n1->get() < n2->get();
+        comparison_result = (n1->get() < n2->get());
         break;
       case Architecture::CompareOP::equal:
-        comparison_result = n1->get() == n2->get();
+        comparison_result = (n1->get() == n2->get());
         break;
       case Architecture::CompareOP::less_than_or_equal:
-        comparison_result = n1->get() <= n2->get();
+        comparison_result = (n1->get() <= n2->get());
         break;
       default:
         std::cerr << "ERROR in generate_save_cmp n1 cmp n2" << std::endl;
@@ -197,7 +209,19 @@ namespace L1 {
     return;
   }
   void generate_cjump(L1::Number* n, L1::CmpOperation* cmpOP, L1::Register* r, L1::Label* label) {
-    generate_cjump(r, cmpOP, n, label);
+    auto raw_op = cmpOP->get();
+    switch (raw_op) {
+      case Architecture::CompareOP::less_than:
+        raw_op = Architecture::CompareOP::greater_than_or_equal;
+        break;
+      case Architecture::CompareOP::less_than_or_equal:
+        raw_op = Architecture::CompareOP::greater_than;
+        break;
+      default:
+        break;
+    }
+    auto new_cmpOP = new L1::CmpOperation(raw_op);
+    generate_cjump(r, new_cmpOP, n, label);
     return;
   }
   void generate_cjump(L1::Register* r, L1::CmpOperation* cmpOP, L1::Number* n, L1::Label* label) {
@@ -210,13 +234,13 @@ namespace L1 {
     bool comparison_result;
     switch (raw_op) {
       case Architecture::CompareOP::less_than:
-        comparison_result = n1->get() < n2->get();
+        comparison_result = (n1->get() < n2->get());
         break;
       case Architecture::CompareOP::equal:
-        comparison_result = n1->get() == n2->get();
+        comparison_result = (n1->get() == n2->get());
         break;
       case Architecture::CompareOP::less_than_or_equal:
-        comparison_result = n1->get() <= n2->get();
+        comparison_result = (n1->get() <= n2->get());
         break;
       default:
         std::cerr << "ERROR in generate_save_cmp n1 cmp n2" << std::endl;
@@ -303,7 +327,6 @@ namespace L1 {
   void Assembly_visitor::visit(L1::Instruction_return* i) {
     auto instr_data = i->get();
     auto type_name = typeid(*instr_data).name();
-    std::cout << type_name << std::endl;
     if (type_name != NumberName) {
       std::cerr << "ERROR in visit Instruction_return."<< std::endl;
     }
@@ -315,7 +338,6 @@ namespace L1 {
     auto instr_data = i->get();
     auto type_name_1 = typeid(*instr_data[0]).name();
     auto type_name_2 = typeid(*instr_data[1]).name();
-    std::cout << type_name_1 << ", " << type_name_2 << std::endl;
     if (type_name_1 == RegisterName && type_name_2 == NumberName) {
       L1::Register* r = static_cast<L1::Register*>(instr_data[0]);
       L1::Number* n = static_cast<L1::Number*>(instr_data[1]);
@@ -353,15 +375,18 @@ namespace L1 {
   void Assembly_visitor::visit(L1::Instruction_operation* i) {
     auto instr_data = i->get();
     auto type_name_1 = typeid(*instr_data[0]).name();
-    std::cout << type_name_1 << std::endl;
     auto type_name_2 = typeid(*instr_data[1]).name();
     auto type_name_3 = typeid(*instr_data[2]).name();
-    std::cout << type_name_3 << std::endl;
     auto type_name_4 = typeid(*instr_data[3]).name();
     auto type_name_5 = typeid(*instr_data[4]).name();
-    std::cout << type_name_4 << std::endl;
-    std::cout << type_name_5 << std::endl;
-    if (type_name_1 == RegisterName && type_name_3 == RegisterName) {
+    if (type_name_5 != NullItemName) {
+      L1::Register* dst = static_cast<L1::Register*>(instr_data[0]);
+      L1::Operation* op = static_cast<L1::Operation*>(instr_data[1]);
+      L1::Register* r1 = static_cast<L1::Register*>(instr_data[2]);
+      L1::Register* r2 = static_cast<L1::Register*>(instr_data[3]);
+      L1::Number* n = static_cast<L1::Number*>(instr_data[4]);
+      generate_op(dst, op, r1, r2, n);
+    } else if (type_name_1 == RegisterName && type_name_3 == RegisterName ) {
       L1::Register* r1 = static_cast<L1::Register*>(instr_data[0]);
       L1::Operation* op = static_cast<L1::Operation*>(instr_data[1]);
       L1::Register* r2 = static_cast<L1::Register*>(instr_data[2]);
@@ -396,13 +421,6 @@ namespace L1 {
       L1::NullItem* empty1 = static_cast<L1::NullItem*>(instr_data[3]);
       L1::NullItem* empty2 = static_cast<L1::NullItem*>(instr_data[4]);
       generate_op(r, op, m, empty1, empty2);
-    } else if (type_name_5 != NullItemName) {
-      L1::Register* dst = static_cast<L1::Register*>(instr_data[0]);
-      L1::Operation* op = static_cast<L1::Operation*>(instr_data[1]);
-      L1::Register* r1 = static_cast<L1::Register*>(instr_data[2]);
-      L1::Register* r2 = static_cast<L1::Register*>(instr_data[3]);
-      L1::Number* n = static_cast<L1::Number*>(instr_data[4]);
-      generate_op(dst, op, r1, r2, n);
     } else {
       L1::Register* r = static_cast<L1::Register*>(instr_data[0]);
       L1::Operation* op = static_cast<L1::Operation*>(instr_data[1]);
@@ -416,9 +434,7 @@ namespace L1 {
   void Assembly_visitor::visit(L1::Instruction_save_cmp* i) {
     auto instr_data = i->get();
     auto type_name_2 = typeid(*instr_data[1]).name();
-    std::cout << type_name_2 << std::endl;
     auto type_name_4 = typeid(*instr_data[3]).name();
-    std::cout << type_name_4 << std::endl;
     L1::Register* first = static_cast<L1::Register*>(instr_data[0]);
     L1::CmpOperation* third = (L1::CmpOperation*)instr_data[2];
     if (type_name_2 == RegisterName && type_name_4 == RegisterName) {
@@ -429,7 +445,7 @@ namespace L1 {
       L1::Register* second = static_cast<L1::Register*>(instr_data[1]);
       L1::Number* fourth = static_cast<L1::Number*>(instr_data[3]);
       generate_save_cmp(first, second, third, fourth);
-    } else if (type_name_2 == RegisterName && type_name_4 == NumberName) {
+    } else if (type_name_2 == NumberName && type_name_4 == RegisterName) {
       L1::Number* second = static_cast<L1::Number*>(instr_data[1]);
       L1::Register* fourth = static_cast<L1::Register*>(instr_data[3]);
       generate_save_cmp(first, second, third, fourth);
@@ -444,9 +460,7 @@ namespace L1 {
   void Assembly_visitor::visit(L1::Instruction_cjump* i) {
     auto instr_data = i->get();
     auto type_name_1 = typeid(*instr_data[0]).name();
-    std::cout << type_name_1 << std::endl;
     auto type_name_3 = typeid(*instr_data[2]).name();
-    std::cout << type_name_3 << std::endl;
     L1::CmpOperation* second = static_cast<L1::CmpOperation*>(instr_data[1]);
     L1::Label* fourth = static_cast<L1::Label*>(instr_data[3]);
     if (type_name_1 == RegisterName && type_name_3 == RegisterName) {
@@ -457,13 +471,13 @@ namespace L1 {
       L1::Register* first = static_cast<L1::Register*>(instr_data[0]);
       L1::Number* third = static_cast<L1::Number*>(instr_data[2]);
       generate_cjump(first, second, third, fourth);
-    } else if (type_name_1 == RegisterName && type_name_3 == NumberName) {
+    } else if (type_name_1 == NumberName && type_name_3 == RegisterName) {
       L1::Number* first = static_cast<L1::Number*>(instr_data[0]);
       L1::Register* third = static_cast<L1::Register*>(instr_data[2]);
       generate_cjump(first, second, third, fourth);
     } else {
-      L1::Number* first = static_cast<L1::Number*>(instr_data[1]);
-      L1::Number* third = static_cast<L1::Number*>(instr_data[3]);
+      L1::Number* first = static_cast<L1::Number*>(instr_data[0]);
+      L1::Number* third = static_cast<L1::Number*>(instr_data[2]);
       generate_cjump(first, second, third, fourth);
     }
     return;
@@ -484,7 +498,6 @@ namespace L1 {
     auto instr_data = i->get();
     L1::Number* second = static_cast<L1::Number*>(instr_data[1]);
     auto type_name_1 = typeid(*instr_data[0]).name();
-    std::cout << type_name_1 << std::endl;
     if (type_name_1 == RegisterName) {
       L1::Register* first = static_cast<L1::Register*>(instr_data[0]);
       generate_call(first, second);

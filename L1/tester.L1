@@ -1,15 +1,27 @@
 (@go
  (@go
   0 0
+  // test
   rdi <- 1
-  call @add1 1
-  rdi <- rax
+  mem rsp -8 <- :testFunction_ret
+  call @testFunction 7
+  :testFunction_ret
+  r10 <- 1 = rax
+  rsi <- 1
+	rdi -= mem rsp 0
+	rdi @ rsi rdi 4
+  cjump 4 <= rdi :true 
+	rax <- rdi
   call print 1
+  cjump 0 = 0 :true
+  // test
+  :true
   return
  )
- (@add1
-  1 0
-  rax <- rdi
-  rax += 2
-  return)
+ (@testFunction
+	7 0
+	rdi <- mem rsp 0
+	call print 1
+	return
+)
 )
