@@ -8,21 +8,19 @@
 
 using namespace std;
 
-namespace Generator {
+namespace L1 {
 
   std::ofstream outputFile;
 
-  Assembly_visitor* generator;
+  L1::Assembly_visitor g;
 
-  std::string NullItemName = "asdf";
-  std::string NumberName = "asdf";
-  std::string LabelName = "asdf";
-  std::string RegisterName = "asdf";
-  std::string MemoryLocationName = "asdf";
-  std::string OperationName = "asdf";
-  std::string CmpOperationName = "asdf";
+  std::string NullItemName = "NullItem";
+  std::string NumberName = "N2L16NumberE";
+  std::string LabelName = "N2L15LabelE";
+  std::string RegisterName = "N2L18RegisterE";
+  std::string MemoryLocationName = "N2L114MemoryLocationE";
 
-  void generate_code(L1::Program p) {
+  void generate_code(L1::Program &p) {
 
     /* 
      * Open the output file.
@@ -32,7 +30,7 @@ namespace Generator {
     /* 
      * Generate target code
      */
-    p.accept(generator);
+    p.accept(&g);
 
     /* 
      * Close the output file.
@@ -78,23 +76,31 @@ namespace Generator {
   // w <- mem x M
   void generate_assignment(L1::Register* r, L1::MemoryLocation* mem) {
     auto mem_info = mem->get();
-    outputFile << "\t\tmovq " << std::to_string(std::get<1>(mem_info)->get())<< "(%" << Architecture::to_string(std::get<0>(mem_info)->get()) << ") %" << Architecture::to_string(r->get()) << std::endl;
+    auto reg = static_cast<L1::Register*>(mem_info[0]);
+    auto offset = static_cast<L1::Number*>(mem_info[1]);
+    outputFile << "\t\tmovq " << std::to_string(offset->get())<< "(%" << Architecture::to_string(reg->get()) << ") %" << Architecture::to_string(r->get()) << std::endl;
     return;
   }
   // mem x M <- s
   void generate_assignment(L1::MemoryLocation* mem, L1::Number* n) {
     auto mem_info = mem->get();
-    outputFile << "\t\tmovq $" << std::to_string(n->get()) << ", " << std::to_string(std::get<1>(mem_info)->get())<< "(%" << Architecture::to_string(std::get<0>(mem_info)->get()) << ")" << std::endl;
+    auto reg = static_cast<L1::Register*>(mem_info[0]);
+    auto offset = static_cast<L1::Number*>(mem_info[1]);
+    outputFile << "\t\tmovq $" << std::to_string(n->get()) << ", " << std::to_string(offset->get())<< "(%" << Architecture::to_string(reg->get()) << ")" << std::endl;
     return;
   }
   void generate_assignment(L1::MemoryLocation* mem, L1::Label* label) {
     auto mem_info = mem->get();
-    outputFile << "\t\tmovq $_" << label->get().substr(1) << ", " << std::to_string(std::get<1>(mem_info)->get())<< "(%" << Architecture::to_string(std::get<0>(mem_info)->get()) << ")" << std::endl;
+    auto reg = static_cast<L1::Register*>(mem_info[0]);
+    auto offset = static_cast<L1::Number*>(mem_info[1]);
+    outputFile << "\t\tmovq $_" << label->get().substr(1) << ", " << std::to_string(offset->get())<< "(%" << Architecture::to_string(reg->get()) << ")" << std::endl;
     return;
   }
   void generate_assignment(L1::MemoryLocation* mem, L1::Register* r) {
     auto mem_info = mem->get();
-    outputFile << "\t\tmovq %" << Architecture::to_string(r->get()) << ", " << std::to_string(std::get<1>(mem_info)->get())<< "(%" << Architecture::to_string(std::get<0>(mem_info)->get()) << ")" << std::endl;
+    auto reg = static_cast<L1::Register*>(mem_info[0]);
+    auto offset = static_cast<L1::Number*>(mem_info[1]);
+    outputFile << "\t\tmovq %" << Architecture::to_string(r->get()) << ", " << std::to_string(offset->get())<< "(%" << Architecture::to_string(reg->get()) << ")" << std::endl;
     return;
   }
   // w aop t, w sop sx, w sop N
@@ -122,23 +128,29 @@ namespace Generator {
   void generate_op(L1::MemoryLocation* mem, L1::Operation* op, L1::Register* r, L1::NullItem* blank, L1::NullItem* blank2) {
     auto op_info = Architecture::get_op_instr(op->get());
     auto mem_info = mem->get();
+    auto reg = static_cast<L1::Register*>(mem_info[0]);
+    auto offset = static_cast<L1::Number*>(mem_info[1]);
     std::string instruction = std::get<0>(op_info);
-    outputFile << "\t\t" << instruction << " %" << Architecture::to_string(r->get()) << ", %" << std::to_string(std::get<1>(mem_info)->get()) << "(" << Architecture::to_string(std::get<0>(mem_info)->get()) << ")" << std::endl;
+    outputFile << "\t\t" << instruction << " %" << Architecture::to_string(r->get()) << ", %" << std::to_string(offset->get()) << "(" << Architecture::to_string(reg->get()) << ")" << std::endl;
     return;
   }
   void generate_op(L1::MemoryLocation* mem, L1::Operation* op, L1::Number* n, L1::NullItem* blank, L1::NullItem* blank2) {
     auto op_info = Architecture::get_op_instr(op->get());
     auto mem_info = mem->get();
+    auto reg = static_cast<L1::Register*>(mem_info[0]);
+    auto offset = static_cast<L1::Number*>(mem_info[1]);
     std::string instruction = std::get<0>(op_info);
-    outputFile << "\t\t" << instruction << " $" << std::to_string(n->get()) << ", %" << std::to_string(std::get<1>(mem_info)->get()) << "(" << Architecture::to_string(std::get<0>(mem_info)->get()) << ")" << std::endl;
+    outputFile << "\t\t" << instruction << " $" << std::to_string(n->get()) << ", %" << std::to_string(offset->get()) << "(" << Architecture::to_string(reg->get()) << ")" << std::endl;
     return;
   }
   // w += mem x M, w -= mem x M
   void generate_op(L1::Register* r, L1::Operation* op, L1::MemoryLocation* mem, L1::NullItem* blank, L1::NullItem* blank2) {
     auto op_info = Architecture::get_op_instr(op->get());
     auto mem_info = mem->get();
+    auto reg = static_cast<L1::Register*>(mem_info[0]);
+    auto offset = static_cast<L1::Number*>(mem_info[1]);
     std::string instruction = std::get<0>(op_info);
-    outputFile << "\t\t" << instruction << " %" << std::to_string(std::get<1>(mem_info)->get()) << "(" << Architecture::to_string(std::get<0>(mem_info)->get()) << ")" << ", %" << Architecture::to_string(r->get()) << std::endl;
+    outputFile << "\t\t" << instruction << " %" << std::to_string(offset->get()) << "(" << Architecture::to_string(reg->get()) << ")" << ", %" << Architecture::to_string(r->get()) << std::endl;
     return;
   }
   // w <- t cmp t
@@ -226,7 +238,10 @@ namespace Generator {
   }
   // return
   void generate_return(L1::Number* num_locals) {
-    outputFile << "\t\taddq $" << std::to_string(num_locals->get() * 8) << ", %rsp" << std::endl;
+    auto n = num_locals->get();
+    if (n > 0) {
+      outputFile << "\t\taddq $" << std::to_string(num_locals->get() * 8) << ", %rsp" << std::endl;
+    }
     outputFile << "\t\tretq" << std::endl;
     return;
   }
@@ -237,7 +252,7 @@ namespace Generator {
     return;
   }
   void generate_call(L1::Label* label, L1::Number* n) {
-    outputFile << "subq $" << std::to_string(8 + (8 * std::max(0, ((int)n->get() - 6)))) << ", %rsp" << std::endl;
+    outputFile << "\t\tsubq $" << std::to_string(8 + (8 * std::max(0, ((int)n->get() - 6)))) << ", %rsp" << std::endl;
     outputFile << "\t\tjmp _" << label->get().substr(1) << std::endl;
     return;
   }
@@ -285,9 +300,10 @@ namespace Generator {
     return;
   }
 
-  void Assembly_visitor::visit(const L1::Instruction_return* i) const {
+  void Assembly_visitor::visit(L1::Instruction_return* i) {
     auto instr_data = i->get();
     auto type_name = typeid(*instr_data).name();
+    std::cout << type_name << std::endl;
     if (type_name != NumberName) {
       std::cerr << "ERROR in visit Instruction_return."<< std::endl;
     }
@@ -295,37 +311,39 @@ namespace Generator {
     generate_return(n);
     return;
   }
-  void Assembly_visitor::visit(const L1::Instruction_assignment* i) const {
+  void Assembly_visitor::visit(L1::Instruction_assignment* i) {
+    std::cout << i->to_string() << std::endl;
     auto instr_data = i->get();
     auto type_name_1 = typeid(*instr_data[0]).name();
     auto type_name_2 = typeid(*instr_data[1]).name();
+    std::cout << type_name_1 << ", " << type_name_2 << std::endl;
     if (type_name_1 == RegisterName && type_name_2 == NumberName) {
-      L1::Register* r = (L1::Register*)instr_data[0];
-      L1::Number* n = (L1::Number*)instr_data[1];
+      L1::Register* r = static_cast<L1::Register*>(instr_data[0]);
+      L1::Number* n = static_cast<L1::Number*>(instr_data[1]);
       generate_assignment(r, n);
     } else if (type_name_1 == RegisterName && type_name_2 == LabelName) {
-      L1::Register* r = (L1::Register*)instr_data[0];
-      L1::Label* label = (L1::Label*)instr_data[1];
+      L1::Register* r = static_cast<L1::Register*>(instr_data[0]);
+      L1::Label* label = static_cast<L1::Label*>(instr_data[1]);
       generate_assignment(r, label);
     } else if (type_name_1 == RegisterName && type_name_2 == RegisterName) {
-      L1::Register* r1 = (L1::Register*)instr_data[0];
-      L1::Register* r2 = (L1::Register*)instr_data[1];
+      L1::Register* r1 = static_cast<L1::Register*>(instr_data[0]);
+      L1::Register* r2 = static_cast<L1::Register*>(instr_data[1]);
       generate_assignment(r1, r2);
     } else if (type_name_1 == RegisterName && type_name_2 == MemoryLocationName) {
-      L1::Register* r = (L1::Register*)instr_data[0];
-      L1::MemoryLocation* m = (L1::MemoryLocation*)instr_data[1];
+      L1::Register* r = static_cast<L1::Register*>(instr_data[0]);
+      L1::MemoryLocation* m = static_cast<L1::MemoryLocation*>(instr_data[1]);
       generate_assignment(r, m);
     } else if (type_name_1 == MemoryLocationName && type_name_2 == NumberName) {
-      L1::MemoryLocation* m = (L1::MemoryLocation*)instr_data[0];
-      L1::Number* n = (L1::Number*)instr_data[1];
+      L1::MemoryLocation* m = static_cast<L1::MemoryLocation*>(instr_data[0]);
+      L1::Number* n = static_cast<L1::Number*>(instr_data[1]);
       generate_assignment(m, n);
     } else if (type_name_1 == MemoryLocationName && type_name_2 == LabelName) {
-      L1::MemoryLocation* m = (L1::MemoryLocation*)instr_data[0];
-      L1::Label* label = (L1::Label*)instr_data[1];
+      L1::MemoryLocation* m = static_cast<L1::MemoryLocation*>(instr_data[0]);
+      L1::Label* label = static_cast<L1::Label*>(instr_data[1]);
       generate_assignment(m, label);
     } else if (type_name_1 == MemoryLocationName && type_name_2 == RegisterName) {
-      L1::MemoryLocation* m = (L1::MemoryLocation*)instr_data[0];
-      L1::Register* r = (L1::Register*)instr_data[1];
+      L1::MemoryLocation* m = static_cast<L1::MemoryLocation*>(instr_data[0]);
+      L1::Register* r = static_cast<L1::Register*>(instr_data[1]);
       generate_assignment(m, r);
     } else {
       std::cerr << "ERROR in visit Instruction_assignment" << std::endl;
@@ -333,123 +351,189 @@ namespace Generator {
 
     return;
   }
-  void Assembly_visitor::visit(const L1::Instruction_operation* i) const {
+  void Assembly_visitor::visit(L1::Instruction_operation* i) {
     auto instr_data = i->get();
     auto type_name_1 = typeid(*instr_data[0]).name();
+    std::cout << type_name_1 << std::endl;
     auto type_name_2 = typeid(*instr_data[1]).name();
     auto type_name_3 = typeid(*instr_data[2]).name();
+    std::cout << type_name_3 << std::endl;
     auto type_name_4 = typeid(*instr_data[3]).name();
     auto type_name_5 = typeid(*instr_data[4]).name();
+    std::cout << type_name_4 << std::endl;
+    std::cout << type_name_5 << std::endl;
     if (type_name_1 == RegisterName && type_name_3 == RegisterName) {
-      L1::Register* r1 = (L1::Register*)instr_data[0];
-      L1::Operation* op = (L1::Operation*)instr_data[1];
-      L1::Register* r2 = (L1::Register*)instr_data[2];
-      L1::NullItem* empty1 = (L1::NullItem*)instr_data[3];
-      L1::NullItem* empty2 = (L1::NullItem*)instr_data[4];
+      L1::Register* r1 = static_cast<L1::Register*>(instr_data[0]);
+      L1::Operation* op = static_cast<L1::Operation*>(instr_data[1]);
+      L1::Register* r2 = static_cast<L1::Register*>(instr_data[2]);
+      L1::NullItem* empty1 = static_cast<L1::NullItem*>(instr_data[3]);
+      L1::NullItem* empty2 = static_cast<L1::NullItem*>(instr_data[4]);
       generate_op(r1, op, r2, empty1, empty2);
     } else if (type_name_1 == RegisterName && type_name_3 == NumberName) {
-      L1::Register* r = (L1::Register*)instr_data[0];
-      L1::Operation* op = (L1::Operation*)instr_data[1];
-      L1::Number* n = (L1::Number*)instr_data[2];
-      L1::NullItem* empty1 = (L1::NullItem*)instr_data[3];
-      L1::NullItem* empty2 = (L1::NullItem*)instr_data[4];
+      L1::Register* r = static_cast<L1::Register*>(instr_data[0]);
+      L1::Operation* op = static_cast<L1::Operation*>(instr_data[1]);
+      L1::Number* n = static_cast<L1::Number*>(instr_data[2]);
+      L1::NullItem* empty1 = static_cast<L1::NullItem*>(instr_data[3]);
+      L1::NullItem* empty2 = static_cast<L1::NullItem*>(instr_data[4]);
       generate_op(r, op, n, empty1, empty2);
     } else if (type_name_1 == MemoryLocationName && type_name_3 == RegisterName) {
-      L1::MemoryLocation* m = (L1::MemoryLocation*)instr_data[0];
-      L1::Operation* op = (L1::Operation*)instr_data[1];
-      L1::Register* r = (L1::Register*)instr_data[2];
-      L1::NullItem* empty1 = (L1::NullItem*)instr_data[3];
-      L1::NullItem* empty2 = (L1::NullItem*)instr_data[4];
+      L1::MemoryLocation* m = static_cast<L1::MemoryLocation*>(instr_data[0]);
+      L1::Operation* op = static_cast<L1::Operation*>(instr_data[1]);
+      L1::Register* r = static_cast<L1::Register*>(instr_data[2]);
+      L1::NullItem* empty1 = static_cast<L1::NullItem*>(instr_data[3]);
+      L1::NullItem* empty2 = static_cast<L1::NullItem*>(instr_data[4]);
       generate_op(m, op, r, empty1, empty2);
     } else if (type_name_1 == MemoryLocationName && type_name_3 == NumberName) {
-      L1::MemoryLocation* m = (L1::MemoryLocation*)instr_data[0];
-      L1::Operation* op = (L1::Operation*)instr_data[1];
-      L1::Number* n = (L1::Number*)instr_data[2];
-      L1::NullItem* empty1 = (L1::NullItem*)instr_data[3];
-      L1::NullItem* empty2 = (L1::NullItem*)instr_data[4];
+      L1::MemoryLocation* m = static_cast<L1::MemoryLocation*>(instr_data[0]);
+      L1::Operation* op = static_cast<L1::Operation*>(instr_data[1]);
+      L1::Number* n = static_cast<L1::Number*>(instr_data[2]);
+      L1::NullItem* empty1 = static_cast<L1::NullItem*>(instr_data[3]);
+      L1::NullItem* empty2 = static_cast<L1::NullItem*>(instr_data[4]);
       generate_op(m, op, n, empty1, empty2);
     } else if (type_name_1 == RegisterName && type_name_3 == MemoryLocationName) {
-      L1::Register* r = (L1::Register*)instr_data[0];
-      L1::Operation* op = (L1::Operation*)instr_data[1];
-      L1::MemoryLocation* m = (L1::MemoryLocation*)instr_data[2];
-      L1::NullItem* empty1 = (L1::NullItem*)instr_data[3];
-      L1::NullItem* empty2 = (L1::NullItem*)instr_data[4];
+      L1::Register* r = static_cast<L1::Register*>(instr_data[0]);
+      L1::Operation* op = static_cast<L1::Operation*>(instr_data[1]);
+      L1::MemoryLocation* m = static_cast<L1::MemoryLocation*>(instr_data[2]);
+      L1::NullItem* empty1 = static_cast<L1::NullItem*>(instr_data[3]);
+      L1::NullItem* empty2 = static_cast<L1::NullItem*>(instr_data[4]);
       generate_op(r, op, m, empty1, empty2);
     } else if (type_name_5 != NullItemName) {
-      L1::Register* dst = (L1::Register*)instr_data[0];
-      L1::Operation* op = (L1::Operation*)instr_data[1];
-      L1::Register* r1 = (L1::Register*)instr_data[2];
-      L1::Register* r2 = (L1::Register*)instr_data[3];
-      L1::Number* n = (L1::Number*)instr_data[4];
+      L1::Register* dst = static_cast<L1::Register*>(instr_data[0]);
+      L1::Operation* op = static_cast<L1::Operation*>(instr_data[1]);
+      L1::Register* r1 = static_cast<L1::Register*>(instr_data[2]);
+      L1::Register* r2 = static_cast<L1::Register*>(instr_data[3]);
+      L1::Number* n = static_cast<L1::Number*>(instr_data[4]);
       generate_op(dst, op, r1, r2, n);
     } else {
-      L1::Register* r = (L1::Register*)instr_data[0];
-      L1::Operation* op = (L1::Operation*)instr_data[1];
-      L1::NullItem* empty1 = (L1::NullItem*)instr_data[2];
-      L1::NullItem* empty2 = (L1::NullItem*)instr_data[3];
-      L1::NullItem* empty3 = (L1::NullItem*)instr_data[4];
+      L1::Register* r = static_cast<L1::Register*>(instr_data[0]);
+      L1::Operation* op = static_cast<L1::Operation*>(instr_data[1]);
+      L1::NullItem* empty1 = static_cast<L1::NullItem*>(instr_data[2]);
+      L1::NullItem* empty2 = static_cast<L1::NullItem*>(instr_data[3]);
+      L1::NullItem* empty3 = static_cast<L1::NullItem*>(instr_data[4]);
       generate_op(r, op, empty1, empty2, empty3);
     } 
     return;
   }
-  void Assembly_visitor::visit(const L1::Instruction_cjump* i) const {
+  void Assembly_visitor::visit(L1::Instruction_save_cmp* i) {
     auto instr_data = i->get();
-    generate_cjump(instr_data[0], instr_data[1], instr_data[2], instr_data[3]);
+    auto type_name_2 = typeid(*instr_data[1]).name();
+    std::cout << type_name_2 << std::endl;
+    auto type_name_4 = typeid(*instr_data[3]).name();
+    std::cout << type_name_4 << std::endl;
+    L1::Register* first = static_cast<L1::Register*>(instr_data[0]);
+    L1::CmpOperation* third = (L1::CmpOperation*)instr_data[2];
+    if (type_name_2 == RegisterName && type_name_4 == RegisterName) {
+      L1::Register* second = static_cast<L1::Register*>(instr_data[1]);
+      L1::Register* fourth = static_cast<L1::Register*>(instr_data[3]);
+      generate_save_cmp(first, second, third, fourth);
+    } else if (type_name_2 == RegisterName && type_name_4 == NumberName) {
+      L1::Register* second = static_cast<L1::Register*>(instr_data[1]);
+      L1::Number* fourth = static_cast<L1::Number*>(instr_data[3]);
+      generate_save_cmp(first, second, third, fourth);
+    } else if (type_name_2 == RegisterName && type_name_4 == NumberName) {
+      L1::Number* second = static_cast<L1::Number*>(instr_data[1]);
+      L1::Register* fourth = static_cast<L1::Register*>(instr_data[3]);
+      generate_save_cmp(first, second, third, fourth);
+    } else {
+      L1::Number* second = static_cast<L1::Number*>(instr_data[1]);
+      L1::Number* fourth = static_cast<L1::Number*>(instr_data[3]);
+      generate_save_cmp(first, second, third, fourth);
+    }
+    
     return;
   }
-  void Assembly_visitor::visit(const L1::Instruction_save_cmp* i) const {
+  void Assembly_visitor::visit(L1::Instruction_cjump* i) {
     auto instr_data = i->get();
-    generate_save_cmp(instr_data[0], instr_data[1], instr_data[2], instr_data[3]);
+    auto type_name_1 = typeid(*instr_data[0]).name();
+    std::cout << type_name_1 << std::endl;
+    auto type_name_3 = typeid(*instr_data[2]).name();
+    std::cout << type_name_3 << std::endl;
+    L1::CmpOperation* second = static_cast<L1::CmpOperation*>(instr_data[1]);
+    L1::Label* fourth = static_cast<L1::Label*>(instr_data[3]);
+    if (type_name_1 == RegisterName && type_name_3 == RegisterName) {
+      L1::Register* first = static_cast<L1::Register*>(instr_data[0]);
+      L1::Register* third = static_cast<L1::Register*>(instr_data[2]);
+      generate_cjump(first, second, third, fourth);
+    } else if (type_name_1 == RegisterName && type_name_3 == NumberName) {
+      L1::Register* first = static_cast<L1::Register*>(instr_data[0]);
+      L1::Number* third = static_cast<L1::Number*>(instr_data[2]);
+      generate_cjump(first, second, third, fourth);
+    } else if (type_name_1 == RegisterName && type_name_3 == NumberName) {
+      L1::Number* first = static_cast<L1::Number*>(instr_data[0]);
+      L1::Register* third = static_cast<L1::Register*>(instr_data[2]);
+      generate_cjump(first, second, third, fourth);
+    } else {
+      L1::Number* first = static_cast<L1::Number*>(instr_data[1]);
+      L1::Number* third = static_cast<L1::Number*>(instr_data[3]);
+      generate_cjump(first, second, third, fourth);
+    }
     return;
   }
-  void Assembly_visitor::visit(const L1::Instruction_label* i) const {
+  void Assembly_visitor::visit(L1::Instruction_label* i) {
     auto instr_data = i->get();
-    generate_label(instr_data);
+    L1::Label* label = (L1::Label*)instr_data;
+    generate_label(label);
     return;
   }
-  void Assembly_visitor::visit(const L1::Instruction_goto* i) const {
+  void Assembly_visitor::visit(L1::Instruction_goto* i) {
     auto instr_data = i->get();
-    generate_goto(instr_data);
+    L1::Label* label = (L1::Label*)instr_data;
+    generate_goto(label);
     return;
   }
-  void Assembly_visitor::visit(const L1::Instruction_call* i) const {
+  void Assembly_visitor::visit(L1::Instruction_call* i) {
     auto instr_data = i->get();
-    generate_call(instr_data[0], instr_data[1]);
+    L1::Number* second = static_cast<L1::Number*>(instr_data[1]);
+    auto type_name_1 = typeid(*instr_data[0]).name();
+    std::cout << type_name_1 << std::endl;
+    if (type_name_1 == RegisterName) {
+      L1::Register* first = static_cast<L1::Register*>(instr_data[0]);
+      generate_call(first, second);
+    } else {
+      L1::Label* first = static_cast<L1::Label*>(instr_data[0]);
+      generate_call(first, second);
+    }
     return;
   }
-  void Assembly_visitor::visit(const L1::Instruction_call_print* i) const {
+  void Assembly_visitor::visit(L1::Instruction_call_print* i) {
     generate_call_print();
     return;
   }
-  void Assembly_visitor::visit(const L1::Instruction_call_input* i) const {
+  void Assembly_visitor::visit(L1::Instruction_call_input* i) {
     generate_call_input();
     return;
   }
-  void Assembly_visitor::visit(const L1::Instruction_call_allocate* i) const {
+  void Assembly_visitor::visit(L1::Instruction_call_allocate* i) {
     generate_call_allocate();
     return;
   }
-  void Assembly_visitor::visit(const L1::Instruction_call_tensorError* i) const {
-    generate_call_tensorError(i->get());
+  void Assembly_visitor::visit(L1::Instruction_call_tensorError* i) {
+    auto instr_data = i->get();
+    L1::Number* first = (L1::Number*)instr_data;
+    generate_call_tensorError(first);
     return;
   }
 
-  void Assembly_visitor::visit(const L1::Program* p) const {
+  void Assembly_visitor::visit(L1::Program* p) {
     outputFile << "\t\t.text" << std::endl << "\t\t.globl go" << std::endl << "go:" << std::endl;
     save_calle_saved_registers();
-    outputFile << "call " << p->entryPointLabel << std::endl;
+    outputFile << "\t\tcall _" << p->entryPointLabel.substr(1) << std::endl;
     restore_calle_saved_registers();
-    outputFile << "retq" << std::endl;
+    outputFile << "\t\tretq" << std::endl;
     for (auto f: p->functions) {
-      f->accept(generator);
+      f->accept(&g);
     }
     return;
   }
 
-  void Assembly_visitor::visit(const L1::Function* fn) const{
-    outputFile << "@" << fn->name.substr(1) << ":" << std::endl;
+  void Assembly_visitor::visit(L1::Function* fn) {
+    outputFile << "_" << fn->name.substr(1) << ":" << std::endl;
+    auto num_locals = fn->locals;
+    if (num_locals > 0) {
+      outputFile << "\t\tsubq $" << std::to_string(((int)num_locals * 8)) << ", %rsp" << std::endl;
+    }
     for (auto i: fn->instructions) {
-      i->accept(generator);
+      i->accept(&g);
     }
     return;
   }

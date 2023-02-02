@@ -11,77 +11,78 @@ namespace L1 {
     return;
   }
 
-  std::string NullItem::to_string() const {
+  std::string NullItem::to_string() {
     return "\t\t\tNullItem\n";
   }
 
   // Number
   Number::Number(int64_t value) {
-    value = value;
+    this->value = value;
     return;
   }
 
-  std::string Number::to_string() const {
-    return "\t\t\tValue: " + std::to_string(value) + "\n";
+  std::string Number::to_string() {
+    return "\t\t\tValue: " + std::to_string(this->value) + "\n";
   }
 
   int64_t Number::get() const {
-    return value;
+    return this->value;
   }
 
   bool Number::operator == (const Number &other) const {
-    return value == other.get();
+    return this->value == other.get();
   }
 
   // Label
   Label::Label(std::string value) {
-    value = value;
+    this->value = value;
     return;
   }
 
-  std::string Label::to_string() const {
-    return "\t\t\tValue: " + value + "\n";
+  std::string Label::to_string() {
+    return "\t\t\tValue: " + this->value + "\n";
   }
 
   std::string Label::get() const {
-    return value;
+    return this->value;
   }
 
   bool Label::operator == (const Label &other) const {
-    return value == other.get();
+    return this->value == other.get();
   }
 
   // Register
   Register::Register(Architecture::RegisterID r) {
-    ID = r;
+    this->ID = r;
     return;
   }
 
-  std::string Register::to_string() const {
-    return "\t\t\tRegister: " + Architecture::to_string(ID) + "\n";
+  std::string Register::to_string() {
+    return "\t\t\tRegister: " + Architecture::to_string(this->ID) + "\n";
   }
 
   Architecture::RegisterID Register::get() const {
-    return ID;
+    return this->ID;
   }
 
   bool Register::operator == (const Register &other) const {
-    return ID == other.get();
+    return this->ID == other.get();
   }
 
   // MemoryLocation
-  MemoryLocation::MemoryLocation(Register* base, Number* off) {
-    base_register = base;
-    off = offset;
+  MemoryLocation::MemoryLocation(Register* base, Number* offset) {
+    this->base_register = base;
+    this->offset = offset;
     return;
   }
 
-  std::string MemoryLocation::to_string() const {
-    return "\t\t\tMemoryLocation:\n\t" + base_register->to_string() + "\t" + offset->to_string();
+  std::string MemoryLocation::to_string() {
+    return "\t\t\tMemoryLocation:\n\t" + this->base_register->to_string() + "\t" + this->offset->to_string();
   }
 
-  std::pair<Register*, Number*> MemoryLocation::get() const {
-    return std::make_pair(base_register, offset);
+  std::vector<Item*> MemoryLocation::get() const {
+    std::vector<Item*> vec = {this->base_register, this->offset};
+    return vec;
   }
 
   bool MemoryLocation::operator == (const MemoryLocation &other) const {
@@ -90,94 +91,94 @@ namespace L1 {
 
   // Operation
   Operation::Operation(Architecture::OP op) {
-    OP = op;
+    this->OP = op;
     return;
   }
 
-  std::string Operation::to_string() const {
-    return "\t\t\tOP: " + Architecture::to_string(OP) + "\n";
+  std::string Operation::to_string() {
+    return "\t\t\tOP: " + Architecture::to_string(this->OP) + "\n";
   }
 
   Architecture::OP Operation::get() const {
-    return OP;
+    return this->OP;
   }
 
   bool Operation::operator == (const Operation &other) const {
-    return OP == other.get();
+    return this->OP == other.get();
   }
 
   // CmpOperation
   CmpOperation::CmpOperation(Architecture::CompareOP op) {
-    cmpOP = op;
+    this->cmpOP = op;
     return;
   }
 
-  std::string CmpOperation::to_string() const {
-    return "\t\t\tCompareOP: " + Architecture::to_string(cmpOP) + "\n";
+  std::string CmpOperation::to_string() {
+    return "\t\t\tCompareOP: " + Architecture::to_string(this->cmpOP) + "\n";
   }
 
   Architecture::CompareOP CmpOperation::get() const {
-    return cmpOP;
+    return this->cmpOP;
   }
 
   bool CmpOperation::operator == (const CmpOperation &other) const {
-    return cmpOP == other.get();
+    return this->cmpOP == other.get();
   }
 
   std::string InstructionOffset = "\t\t";
 
   // Instruction_return
   Instruction_return::Instruction_return(Item* num_locals) {
-    num_locals = num_locals;
+    this->num_locals = num_locals;
     return;
   }
 
-  std::string Instruction_return::to_string() const {
+  std::string Instruction_return::to_string() {
     return InstructionOffset + "Instruction_return\n";
   }
 
-  void Instruction_return::accept(Visitor* v) const {
+  void Instruction_return::accept(Visitor* v) {
     v->visit(this);
     return;
   }
 
   Item* Instruction_return::get() const {
-    return num_locals;
+    return this->num_locals;
   }
 
   // Instruction_assignment
   Instruction_assignment::Instruction_assignment(Item* dst, Item* src) {
-    src = src;
-    dst = dst;
+    this->src = src;
+    this->dst = dst;
   }
-  std::string Instruction_assignment::to_string() const {
-    return InstructionOffset + "Instruction_assignment:\n" + src->to_string() + dst->to_string();
+  std::string Instruction_assignment::to_string() {
+    return InstructionOffset + "Instruction_assignment:\n" + this->src->to_string() + this->dst->to_string();
   }
 
-  void Instruction_assignment::accept(Visitor* v) const {
+  void Instruction_assignment::accept(Visitor* v) {
     v->visit(this);
     return;
   }
 
   std::vector<Item*> Instruction_assignment::get() const {
-    std::vector<Item*> vec = {dst, src};
+    std::vector<Item*> vec = {this->dst, this->src};
     return vec;
   }
 
   // Instruction_operation
   Instruction_operation::Instruction_operation(Item* left, Item* op, Item* right, Item* lea_reg, Item* factor) {
-    OP = op;
-    left = left;
-    right = right;
-    lea_reg = lea_reg;
-    factor = factor;
+    this->OP = op;
+    this->left = left;
+    this->right = right;
+    this->lea_reg = lea_reg;
+    this->factor = factor;
   }
 
-  std::string Instruction_operation::to_string() const {
-    return InstructionOffset + "Instruction_operation:\n" + left->to_string() + OP->to_string() + right->to_string() + lea_reg->to_string() + factor->to_string();
+  std::string Instruction_operation::to_string() {
+    return InstructionOffset + "Instruction_operation:\n" + this->left->to_string() + this->OP->to_string() + this->right->to_string() + this->lea_reg->to_string() + this->factor->to_string();
   }
 
-  void Instruction_operation::accept(Visitor* v) const {
+  void Instruction_operation::accept(Visitor* v) {
     v->visit(this);
     return;
   }
@@ -189,104 +190,104 @@ namespace L1 {
 
   // Instruction_cjump
   Instruction_cjump::Instruction_cjump(Item* left, Item* cmpOP, Item* right, Item* label) {
-    OP = cmpOP;
-    left = left;
-    right = right;
-    label = label;
+    this->OP = cmpOP;
+    this->left = left;
+    this->right = right;
+    this->label = label;
   }
 
-  std::string Instruction_cjump::to_string() const {
-    return InstructionOffset + "Instruction_cjump:\n" + left->to_string() + OP->to_string() + right->to_string() + label->to_string();
+  std::string Instruction_cjump::to_string() {
+    return InstructionOffset + "Instruction_cjump:\n" + this->left->to_string() + this->OP->to_string() + this->right->to_string() + this->label->to_string();
   }
 
-  void Instruction_cjump::accept(Visitor* v) const {
+  void Instruction_cjump::accept(Visitor* v) {
     v->visit(this);
     return;
   }
 
   std::vector<Item*> Instruction_cjump::get() const {
-    std::vector<Item*> vec = {left, OP, right, label};
+    std::vector<Item*> vec = {this->left, this->OP, this->right, this->label};
     return vec;
   }
 
   // Instruction_save_cmp
   Instruction_save_cmp::Instruction_save_cmp(Item* dst, Item* left, Item* cmpOP, Item* right) {
-    dst = dst;
-    OP = cmpOP;
-    left = left;
-    right = right;
+    this->dst = dst;
+    this->OP = cmpOP;
+    this->left = left;
+    this->right = right;
   }
 
-  std::string Instruction_save_cmp::to_string() const {
-    return InstructionOffset + "Instruction_save_cmp:\n" + dst->to_string() + OP->to_string() + left->to_string() + right->to_string();
+  std::string Instruction_save_cmp::to_string() {
+    return InstructionOffset + "Instruction_save_cmp:\n" + this->dst->to_string() + this->OP->to_string() + this->left->to_string() + this->right->to_string();
   }
 
-  void Instruction_save_cmp::accept(Visitor* v) const {
+  void Instruction_save_cmp::accept(Visitor* v) {
     v->visit(this);
     return;
   }
 
   std::vector<Item*> Instruction_save_cmp::get() const {
-    std::vector<Item*> vec = {dst, left, OP, right};
+    std::vector<Item*> vec = {this->dst, this->left, this->OP, this->right};
     return vec;
   }
 
   // Instruction_label
   Instruction_label::Instruction_label(Item* label) {
-    label = label;
+    this->label = label;
     return;
   }
 
-  std::string Instruction_label::to_string() const {
-    return InstructionOffset + "Instruction_label:\n" + label->to_string();
+  std::string Instruction_label::to_string() {
+    return InstructionOffset + "Instruction_label:\n" + this->label->to_string();
   }
 
-  void Instruction_label::accept(Visitor* v) const {
+  void Instruction_label::accept(Visitor* v) {
     v->visit(this);
     return;
   }
 
   Item* Instruction_label::get() const {
-    return label;
+    return this->label;
   }
 
   // Instruction_goto
   Instruction_goto::Instruction_goto(Item* label) {
-    label = label;
+    this->label = label;
     return;
   }
 
-  std::string Instruction_goto::to_string() const {
-    return InstructionOffset + "Instruction_goto:\n" + label->to_string();
+  std::string Instruction_goto::to_string() {
+    return InstructionOffset + "Instruction_goto:\n" + this->label->to_string();
   }
 
-  void Instruction_goto::accept(Visitor* v) const {
+  void Instruction_goto::accept(Visitor* v) {
     v->visit(this);
     return;
   }
 
   Item* Instruction_goto::get() const {
-    return label;
+    return this->label;
   }
 
   // Instruction_call
   Instruction_call::Instruction_call(Item* fn, Item* arg) {
-    fn = fn;
-    arg = arg;
+    this->fn = fn;
+    this->arg = arg;
     return;
   }
 
-  std::string Instruction_call::to_string() const {
-    return InstructionOffset + "Instruction_call:\n" + fn->to_string() + arg->to_string();
+  std::string Instruction_call::to_string() {
+    return InstructionOffset + "Instruction_call:\n" + this->fn->to_string() + this->arg->to_string();
   }
 
-  void Instruction_call::accept(Visitor* v) const {
+  void Instruction_call::accept(Visitor* v) {
     v->visit(this);
     return;
   }
 
   std::vector<Item*> Instruction_call::get() const {
-    std::vector<Item*> vec = {fn, arg};
+    std::vector<Item*> vec = {this->fn, this->arg};
     return vec;
   }
 
@@ -295,11 +296,11 @@ namespace L1 {
     return;
   }
 
-  std::string Instruction_call_print::to_string() const {
+  std::string Instruction_call_print::to_string() {
     return InstructionOffset + "Instruction_call_print:\n";
   }
 
-  void Instruction_call_print::accept(Visitor* v) const {
+  void Instruction_call_print::accept(Visitor* v) {
     v->visit(this);
     return;
   }
@@ -309,11 +310,11 @@ namespace L1 {
     return;
   }
 
-  std::string Instruction_call_input::to_string() const {
+  std::string Instruction_call_input::to_string() {
     return InstructionOffset + "Instruction_call_input:\n";
   }
 
-  void Instruction_call_input::accept(Visitor* v) const {
+  void Instruction_call_input::accept(Visitor* v) {
     v->visit(this);
     return;
   }
@@ -323,58 +324,58 @@ namespace L1 {
     return;
   }
 
-  std::string Instruction_call_allocate::to_string() const {
+  std::string Instruction_call_allocate::to_string() {
     return InstructionOffset + "Instruction_call_allocate:\n";
   }
 
-  void Instruction_call_allocate::accept(Visitor* v) const {
+  void Instruction_call_allocate::accept(Visitor* v) {
     v->visit(this);
     return;
   }
 
   // Instruction_call_tensorError
   Instruction_call_tensorError::Instruction_call_tensorError(Item* arg) {
-    arg = arg;
+    this->arg = arg;
     return;
   }
 
-  std::string Instruction_call_tensorError::to_string() const {
+  std::string Instruction_call_tensorError::to_string() {
     return InstructionOffset + "Instruction_call_tensorError:\n";
   }
 
-  void Instruction_call_tensorError::accept(Visitor* v) const {
+  void Instruction_call_tensorError::accept(Visitor* v) {
     v->visit(this);
     return;
   }
 
   Item* Instruction_call_tensorError::get() const {
-    return arg;
+    return this->arg;
   }
 
-  void Function::to_string() const {
-    std::cout << "This is a function with name " << name << std::endl;
-    std::cout << "and num_arguments " << std::to_string(arguments) << std::endl;
-    std::cout << "and num_locals " << std::to_string(locals) << std::endl;
+  void Function::to_string() {
+    std::cout << "This is a function with name " << this->name << std::endl;
+    std::cout << "and num_arguments " << std::to_string(this->arguments) << std::endl;
+    std::cout << "and num_locals " << std::to_string(this->locals) << std::endl;
     std::cout << "and its instructions are: ";
-    for (auto step : instructions) {
+    for (auto step : this->instructions) {
       std::cout << step->to_string();
     }
   }
 
-  void Function::accept(Visitor* v) const {
+  void Function::accept(Visitor* v) {
     v->visit(this);
     return;
   }
 
-  void Program::to_string() const {
-    std::cout << "This is a Program with entryPointLabel " << entryPointLabel << std::endl;
+  void Program::to_string() {
+    std::cout << "This is a Program with entryPointLabel " << this->entryPointLabel << std::endl;
     std::cout << "and its functions are: ";
-    for (auto fn : functions) {
+    for (auto fn : this->functions) {
       fn->to_string();
     }
   }
   
-  void Program::accept(Visitor* v) const {
+  void Program::accept(Visitor* v) {
     v->visit(this);
     return;
   }

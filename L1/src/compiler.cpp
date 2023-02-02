@@ -60,7 +60,7 @@ int main(
   /*
    * Parse the input file.
    */
-  auto p = L1::parse_file(argv[optind]);
+  auto p = Parser::parse_file(argv[optind]);
 
   /*
    * Code optimizations (optional)
@@ -71,7 +71,8 @@ int main(
    */
   if (verbose){
     for (auto f : p.functions){
-      //TODO
+      f->to_string();
+      std::cout << std::endl;
     }
   }
 
@@ -79,7 +80,7 @@ int main(
    * Generate x86_64 assembly.
    */
   if (enable_code_generator){
-    Generator::generate_code(p);
+    L1::generate_code(p);
   }
 
   return 0;

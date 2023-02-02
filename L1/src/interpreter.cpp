@@ -41,7 +41,7 @@ int main(
   /*
    * Parse the input file.
    */
-  auto p = L1::parse_file(argv[optind]);
+  auto p = Parser::parse_file(argv[optind]);
 
   /*
    * Interpret the L1 program.

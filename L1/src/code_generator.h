@@ -4,11 +4,11 @@
 
 #include <fstream>
 
-namespace Generator{
+namespace L1 {
 
   //extern std::ofstream outputFile;
 
-  void generate_code(L1::Program p);
+  void generate_code(L1::Program &p);
 
   void save_calle_saved_registers();
   
@@ -66,20 +66,20 @@ namespace Generator{
 
   class Assembly_visitor : public L1::Visitor {
     public:
-      void visit(const L1::Instruction_return* i) const;
-      void visit(const L1::Instruction_assignment* i) const;
-      void visit(const L1::Instruction_operation* i) const;
-      void visit(const L1::Instruction_cjump* i) const;
-      void visit(const L1::Instruction_save_cmp* i) const;
-      void visit(const L1::Instruction_label* i) const;
-      void visit(const L1::Instruction_goto* i) const;
-      void visit(const L1::Instruction_call* i) const;
-      void visit(const L1::Instruction_call_print* i) const;
-      void visit(const L1::Instruction_call_input* i) const;
-      void visit(const L1::Instruction_call_allocate* i) const;
-      void visit(const L1::Instruction_call_tensorError* i) const;
-      void visit(const L1::Function* fn) const;
-      void visit(const L1::Program* p) const;
+      void visit(L1::Instruction_return* i);
+      void visit(L1::Instruction_assignment* i);
+      void visit(L1::Instruction_operation* i);
+      void visit(L1::Instruction_cjump* i);
+      void visit(L1::Instruction_save_cmp* i);
+      void visit(L1::Instruction_label* i);
+      void visit(L1::Instruction_goto* i);
+      void visit(L1::Instruction_call* i);
+      void visit(L1::Instruction_call_print* i);
+      void visit(L1::Instruction_call_input* i);
+      void visit(L1::Instruction_call_allocate* i);
+      void visit(L1::Instruction_call_tensorError* i);
+      void visit(L1::Function* fn);
+      void visit(L1::Program* p);
   };
 
 }

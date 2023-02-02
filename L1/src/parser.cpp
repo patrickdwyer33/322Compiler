@@ -32,6 +32,8 @@
 
 namespace pegtl = tao::TAO_PEGTL_NAMESPACE;
 
+using namespace pegtl;
+
 namespace Parser {
 
   std::vector<L1::Item *> parsed_items;
@@ -746,7 +748,7 @@ namespace Parser {
     /*
      * Parse.
      */
-    pegtl::file_input<> fileInput(fileName);
+    pegtl::file_input< > fileInput(fileName);
     L1::Program p;
     pegtl::parse<grammar, action>(fileInput, p);
 
