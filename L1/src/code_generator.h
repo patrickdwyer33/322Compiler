@@ -47,7 +47,7 @@ namespace L1 {
   // goto label
   void generate_goto(L1::Label* label);
   // return
-  void generate_return();
+  void generate_return(L1::Number* num_locals, L1::Number* num_args);
   // call u N
   void generate_call(L1::Register* r, L1::Number* n);
   void generate_call(L1::Label* label, L1::Number* n);

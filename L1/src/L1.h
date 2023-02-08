@@ -96,12 +96,13 @@ namespace L1 {
    */
   class Instruction_return : public Instruction {
     public:
-      Instruction_return(Item* num_locals);
+      Instruction_return(Item* num_locals, Item* num_args);
       std::string to_string() override;
       void accept(Visitor* v);
-      Item* get() const;
+      std::vector<Item*> get() const;
     private:
       Item* num_locals;
+      Item* num_args;
   };
 
   class Instruction_assignment : public Instruction {

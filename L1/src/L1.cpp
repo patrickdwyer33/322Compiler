@@ -128,8 +128,9 @@ namespace L1 {
   std::string InstructionOffset = "\t\t";
 
   // Instruction_return
-  Instruction_return::Instruction_return(Item* num_locals) {
+  Instruction_return::Instruction_return(Item* num_locals, Item* num_args) {
     this->num_locals = num_locals;
+    this->num_args = num_args;
     return;
   }
 
@@ -142,8 +143,9 @@ namespace L1 {
     return;
   }
 
-  Item* Instruction_return::get() const {
-    return this->num_locals;
+  std::vector<Item*> Instruction_return::get() const {
+    std::vector<Item*> vec = {this->num_locals, this->num_args};
+    return vec;
   }
 
   // Instruction_assignment

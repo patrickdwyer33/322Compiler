@@ -540,8 +540,10 @@ namespace Parser {
 	  static void apply(const Input & in, L1::Program & p) {
       L1::Function* currentF = p.functions.back();
       int64_t num_locals = currentF->locals;
+      int64_t num_args = currentF->arguments;
       L1::Number* num_locals_item = new L1::Number(num_locals);
-      L1::Instruction_return* i = new L1::Instruction_return(num_locals_item);
+      L1::Number* num_args_item = new L1::Number(num_args);
+      L1::Instruction_return* i = new L1::Instruction_return(num_locals_item, num_args_item);
       currentF->instructions.push_back(i);
     }
   };

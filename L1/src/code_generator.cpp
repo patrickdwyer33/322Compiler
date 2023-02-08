@@ -170,10 +170,10 @@ namespace L1 {
     auto raw_op = cmpOP->get();
     switch (raw_op) {
       case Architecture::CompareOP::less_than:
-        raw_op = Architecture::CompareOP::greater_than_or_equal;
+        raw_op = Architecture::CompareOP::greater_than;
         break;
       case Architecture::CompareOP::less_than_or_equal:
-        raw_op = Architecture::CompareOP::greater_than;
+        raw_op = Architecture::CompareOP::greater_than_or_equal;
         break;
       default:
         break;
@@ -212,10 +212,10 @@ namespace L1 {
     auto raw_op = cmpOP->get();
     switch (raw_op) {
       case Architecture::CompareOP::less_than:
-        raw_op = Architecture::CompareOP::greater_than_or_equal;
+        raw_op = Architecture::CompareOP::greater_than;
         break;
       case Architecture::CompareOP::less_than_or_equal:
-        raw_op = Architecture::CompareOP::greater_than;
+        raw_op = Architecture::CompareOP::greater_than_or_equal;
         break;
       default:
         break;
@@ -261,22 +261,23 @@ namespace L1 {
     return;
   }
   // return
-  void generate_return(L1::Number* num_locals) {
+  void generate_return(L1::Number* num_locals, L1::Number* num_args) {
     auto n = num_locals->get();
-    if (n > 0) {
-      outputFile << "\t\taddq $" << std::to_string(num_locals->get() * 8) << ", %rsp" << std::endl;
+    auto args = num_args->get();
+    if (n > 0 || args > 6) {
+      outputFile << "\t\taddq $" << std::to_string(((int)n + (std::max(0, (int)args - 6))) * 8) << ", %rsp" << std::endl;
     }
     outputFile << "\t\tretq" << std::endl;
     return;
   }
   // call u N
   void generate_call(L1::Register* r, L1::Number* n) {
-    outputFile << "\t\tsubq $" << std::to_string(8 + (8 * std::max(0, ((int)n->get() - 6)))) << ", %rsp" << std::endl;
+    outputFile << "\t\tsubq $" << std::to_string((8 + (8 * std::max(0, ((int)n->get() - 6))))) << ", %rsp" << std::endl;
     outputFile << "\t\tjmp *%" << Architecture::to_string(r->get()) << std::endl;
     return;
   }
   void generate_call(L1::Label* label, L1::Number* n) {
-    outputFile << "\t\tsubq $" << std::to_string(8 + (8 * std::max(0, ((int)n->get() - 6)))) << ", %rsp" << std::endl;
+    outputFile << "\t\tsubq $" << std::to_string((8 + (8 * std::max(0, ((int)n->get() - 6))))) << ", %rsp" << std::endl;
     outputFile << "\t\tjmp _" << label->get().substr(1) << std::endl;
     return;
   }
@@ -326,12 +327,13 @@ namespace L1 {
 
   void Assembly_visitor::visit(L1::Instruction_return* i) {
     auto instr_data = i->get();
-    auto type_name = typeid(*instr_data).name();
+    auto type_name = typeid(*instr_data[0]).name();
     if (type_name != NumberName) {
       std::cerr << "ERROR in visit Instruction_return."<< std::endl;
     }
-    L1::Number* n = (L1::Number*)instr_data;
-    generate_return(n);
+    L1::Number* n = (L1::Number*)instr_data[0];
+    L1::Number* num_args = (L1::Number*)instr_data[1];
+    generate_return(n, num_args);
     return;
   }
   void Assembly_visitor::visit(L1::Instruction_assignment* i) {
