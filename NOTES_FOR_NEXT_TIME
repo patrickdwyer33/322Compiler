@@ -1,0 +1,7 @@
+Some tests give an empty in, some give an empty file, and one I saw just printed the type of NullItem.
+This is pretty confusing.
+It probably has something to do with the parser.
+But it could also have something to do with the multilevel inheretance shenanigans.
+And all the casting stuff we do in liveness.cpp.
+Gotta double check the main algorithm as well.
+And hopefully optimize it a bit later.
