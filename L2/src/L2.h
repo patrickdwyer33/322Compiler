@@ -6,7 +6,6 @@
 #include <unordered_map>
 #include <Architecture.h>
 
-
 namespace L2 {
 
   class Item {
@@ -43,6 +42,15 @@ namespace L2 {
       Variable(std::string s);
       std::string to_string() override;
       std::string get() const;
+      bool operator==(const Variable& other) const {
+        if (this->s == other.s) return true;
+        else return false;
+      }
+      struct HashFunction {
+        size_t operator()(const Variable& var) const {
+          return std::hash<std::string>{}(var.s);
+        }
+      };
     protected:
       std::string s;
   };
@@ -104,8 +112,8 @@ namespace L2 {
     public:
       virtual std::string to_string() = 0;
       virtual void accept(Visitor* v) = 0;
-      std::unordered_set<L2::Variable*> gen;
-      std::unordered_set<L2::Variable*> kill;
+      std::unordered_set<Variable, Variable::HashFunction> gen;
+      std::unordered_set<Variable, Variable::HashFunction> kill;
       int idx;
       std::unordered_set<int> succs;
   };
@@ -243,8 +251,8 @@ namespace L2 {
       int64_t arguments;
       int64_t locals;
       std::vector<Instruction *> instructions;
-      std::vector<std::unordered_set<Variable *>> ins;
-      std::vector<std::unordered_set<Variable *>> outs;
+      std::vector<std::unordered_set<Variable, Variable::HashFunction>> ins;
+      std::vector<std::unordered_set<Variable, Variable::HashFunction>> outs;
       // can get this info in the parser by updating it whenever we find a label according to the number of instructions in currentF
       std::unordered_map<std::string, int> label_map;
       void accept(Visitor* v);

@@ -1,0 +1,5 @@
+(@main
+	0
+	%rdi @ %rsi %rdi 1
+	return
+)

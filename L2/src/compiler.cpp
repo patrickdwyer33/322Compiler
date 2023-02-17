@@ -110,6 +110,7 @@ int main(
    * Liveness test.
    */
   if (liveness_only){
+    //p.to_string();
     L2::generate_liveness(p);
     L2::print_liveness(p);
     return 0;

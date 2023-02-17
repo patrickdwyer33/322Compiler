@@ -507,8 +507,10 @@ namespace Parser {
   template<> struct action <single_function_name_rule> {
     template<typename Input>
 	  static void apply(const Input & in, L2::Program & p) {
+      p.entryPointLabel = in.string();
       L2::Function* newF = new L2::Function();
       newF->name = in.string();
+      newF->locals = 0;
       p.functions.push_back(newF);
     }
   };
@@ -672,8 +674,6 @@ namespace Parser {
       L2::NullItem* emptyThing = new L2::NullItem();
       L2::NullItem* emptyThing2 = new L2::NullItem();
       L2::NullItem* emptyThing3 = new L2::NullItem();
-      auto test_name = typeid(*emptyThing).name();
-      std::cout << test_name << std::endl;
 
       L2::Instruction_operation* i = new L2::Instruction_operation(reg, op, emptyThing, emptyThing2, emptyThing3);
 
