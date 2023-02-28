@@ -245,6 +245,19 @@ namespace L2 {
       Item* arg;
   };
 
+  class fence_node {
+    public:
+      L2::Variable* var;
+      std::unordered_set<L2::Variable, Variable::HashFunction> neighbors;
+  };
+
+  class fence_graph {
+    public:
+      uint64_t length;
+      std::unordered_map<std::string, L2::fence_node> node_map;
+      //std::set<std::tuple<L2::Variable*, L2::Variable*>> edges;
+  };
+
   class Function {
     public:
       std::string name;
@@ -257,6 +270,7 @@ namespace L2 {
       std::unordered_map<std::string, int> label_map;
       void accept(Visitor* v);
       void to_string();
+      L2::fence_graph* interfence_graph;
   };
 
   class Program {

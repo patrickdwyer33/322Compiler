@@ -91,6 +91,7 @@ namespace L2 {
         std::vector<L2::Item*> items = i->get();
         L2::Variable* dst = dynamic_cast<L2::Variable*>(items[0]);
         L2::NullItem* second = dynamic_cast<L2::NullItem*>(items[2]);
+        L2::NullItem* third = dynamic_cast<L2::NullItem*>(items[3]);
         if (dst != NULL && second != NULL) {
             i->kill.insert(*dst);
             i->gen.insert(*dst);
@@ -101,15 +102,17 @@ namespace L2 {
             if (dst->get() != "rsp") {
                 i->gen.insert(*dst);
             }
+        } else if (third == NULL) {
+            i->kill.insert(*dst);
         } else {
             i->kill.insert(*dst);
             i->gen.insert(*dst);
         }
-        L2::Variable* v1 = dynamic_cast<L2::Variable*>(items[1]);
+        L2::Variable* v1 = dynamic_cast<L2::Variable*>(items[2]);
         if (v1 != NULL) {
             i->gen.insert(*v1);
         } else {
-            L2::MemoryLocation* mem = dynamic_cast<L2::MemoryLocation*>(items[1]);
+            L2::MemoryLocation* mem = dynamic_cast<L2::MemoryLocation*>(items[2]);
             if (mem != NULL) {
                 L2::Variable* x = static_cast<L2::Variable*>(mem->get()[0]);
                 if (x->get() != "rsp") {
@@ -118,7 +121,7 @@ namespace L2 {
                 return;
             }
         }
-        L2::Variable* v2 = dynamic_cast<L2::Variable*>(items[2]);
+        L2::Variable* v2 = dynamic_cast<L2::Variable*>(items[3]);
         if (v2 != NULL) {
             i->gen.insert(*v2);
         }

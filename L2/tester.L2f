@@ -1,5 +1,6 @@
 (@main
 	0
-	%rdi @ %rsi %rdi 1
+	%addr @ %A1 %offest_index 8
+	mem %addr 0 <- %encoded_a
 	return
 )

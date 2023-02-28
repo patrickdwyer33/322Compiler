@@ -17,6 +17,7 @@
 #include <L2.h>
 #include <liveness.h>
 #include <parser.h>
+#include <interfence.h>
 
 void print_help (char *progName){
   std::cerr << "Usage: " << progName << " [-v] [-g 0|1] [-O 0|1|2] [-s] [-l] [-i] SOURCE" << std::endl;
@@ -119,7 +120,9 @@ int main(
    * Interference graph test.
    */
   if (interference_only){
-    //TODO
+    L2::generate_liveness(p);
+    L2::generate_fence(p);
+    L2::print_fence(p);
     return 0;
   }
   /*
