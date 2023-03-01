@@ -1,13 +1,11 @@
-#pragma once
-
 #include <L2.h>
 
 namespace L2 {
 
-    void spill(L2::Program &p);
-    void print_spill(L2::Program &p);
+    std::string generate_code(L2::Program &p);
+    void print_function(L2::Function &fn);
 
-    class spiller : public L2::Visitor {
+    class code_generator_visitor : public L2::Visitor {
         public:
             void visit(Instruction_return* i);
             void visit(Instruction_assignment* i);

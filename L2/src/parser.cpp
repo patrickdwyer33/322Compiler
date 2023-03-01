@@ -538,6 +538,7 @@ namespace Parser {
       } else {
         L2::Function* newF = new L2::Function();
         newF->name = in.string();
+        newF->locals = 0;
         p.functions.push_back(newF);
       }
     }

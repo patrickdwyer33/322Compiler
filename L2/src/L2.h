@@ -79,7 +79,6 @@ namespace L2 {
       MemoryLocation(Variable* base, Number* offset);
       std::string to_string() override;
       std::vector<Item*> get() const;
-    private:
       Variable* base_var;
       Number* offset;
   };
@@ -116,6 +115,9 @@ namespace L2 {
       std::unordered_set<Variable, Variable::HashFunction> kill;
       int idx;
       std::unordered_set<int> succs;
+      bool contains_var;
+      bool var_is_modified;
+      bool var_is_read;
   };
 
   /*
@@ -127,7 +129,6 @@ namespace L2 {
       std::string to_string() override;
       void accept(Visitor* v);
       std::vector<Item*> get() const;
-    private:
       Item* num_locals;
       Item* num_args;
   };
@@ -138,7 +139,6 @@ namespace L2 {
       std::string to_string() override;
       void accept(Visitor* v);
       std::vector<Item*> get() const;
-    private:
       Item* dst;
       Item* src;
   };
@@ -149,7 +149,6 @@ namespace L2 {
       std::string to_string() override;
       void accept(Visitor* v);
       std::vector<Item*> get() const;
-    private:
       Item* left;
       Item* OP;
       Item* right;
@@ -163,7 +162,6 @@ namespace L2 {
       std::string to_string() override;
       void accept(Visitor* v);
       std::vector<Item*> get() const;
-    private:
       Item* left;
       Item* OP;
       Item* right;
@@ -176,7 +174,6 @@ namespace L2 {
       std::string to_string() override;
       void accept(Visitor* v);
       std::vector<Item*> get() const;
-    private:
       Item* dst;
       Item* left;
       Item* OP;
@@ -209,7 +206,6 @@ namespace L2 {
       std::string to_string() override;
       void accept(Visitor* v);
       std::vector<Item*> get() const;
-    private:
       Item* fn;
       Item* arg;
   };

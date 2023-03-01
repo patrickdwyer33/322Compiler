@@ -18,6 +18,8 @@
 #include <liveness.h>
 #include <parser.h>
 #include <interfence.h>
+#include <code_generator.h>
+#include <spiller.h>
 
 void print_help (char *progName){
   std::cerr << "Usage: " << progName << " [-v] [-g 0|1] [-O 0|1|2] [-s] [-l] [-i] SOURCE" << std::endl;
@@ -77,12 +79,12 @@ int main(
      */
     p = Parser::parse_spill_file(argv[optind]);
  
-  } else if (liveness_only){
+  } else if (liveness_only) {
     /*
      * Parse an L2 function.
      */
     p = Parser::parse_function_file(argv[optind]);
-  } else if (interference_only){
+  } else if (interference_only) {
     /*
      * Parse an L2 function.
      */
@@ -96,22 +98,15 @@ int main(
   /*
    * Special cases.
    */
-  if (spill_only){
-    /*
-     * Spill.
-     */
-    //TODO
-    /*
-     * Dump the L2 code.
-     */
-    //TODO
+  if (spill_only) {
+    L2::spill(p);
+    L2::print_spill(p);
     return 0;
   }
   /*
    * Liveness test.
    */
-  if (liveness_only){
-    //p.to_string();
+  if (liveness_only) {
     L2::generate_liveness(p);
     L2::print_liveness(p);
     return 0;
@@ -119,7 +114,7 @@ int main(
   /*
    * Interference graph test.
    */
-  if (interference_only){
+  if (interference_only) {
     L2::generate_liveness(p);
     L2::generate_fence(p);
     L2::print_fence(p);
@@ -128,7 +123,7 @@ int main(
   /*
    * Generate the target code.
    */
-  if (enable_code_generator){
+  if (enable_code_generator) {
     //TODO
   }
   return 0;
