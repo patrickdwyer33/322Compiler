@@ -254,11 +254,13 @@ namespace L2 {
                 if (instr->var_is_read) {
                     fn->instructions.insert(std::next(it, idx + num_added), new_ass_to_load);
                     num_added++;
+                    fn->was_created[*var] = true;
                 }
                 if (instr->var_is_modified) {
                     it = fn->instructions.begin();
                     fn->instructions.insert(std::next(it, idx + num_added + 1), new_ass_to_store);
                     num_added++;
+                    fn->was_created[*var] = true;
                 }
                 cur_var_counter++;
                 //it = fn->instructions.begin();

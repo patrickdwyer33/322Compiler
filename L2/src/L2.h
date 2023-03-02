@@ -5,6 +5,7 @@
 #include <unordered_set>
 #include <unordered_map>
 #include <Architecture.h>
+#include <queue>
 
 namespace L2 {
 
@@ -241,17 +242,33 @@ namespace L2 {
       Item* arg;
   };
 
+  struct {
+    bool operator()(const L2::fence_node left, const L2::fence_node right) const {
+      uint64_t left_size = left.neighbors.size();
+      uint64_t right_size = right.neighbors.size();
+      if (left_size >= 15 && right_size >= 15) {
+        return left_size > right_size;
+      }
+      else if (left_size >= 15 || right_size >= 15) {
+        return right_size > left_size;
+      }
+    } else {
+      return left_size > right_size;
+    }
+  } fence_node_remove_order;
+
   class fence_node {
     public:
       L2::Variable* var;
       std::unordered_set<L2::Variable, Variable::HashFunction> neighbors;
+      Architecture::RegisterID color;
   };
 
   class fence_graph {
     public:
       uint64_t length;
       std::unordered_map<std::string, L2::fence_node> node_map;
-      //std::set<std::tuple<L2::Variable*, L2::Variable*>> edges;
+      std::priority_queue<L2::fence_node, std::vector<L2::fence_node>, fence_node_remove_order> sorted_fence_nodes;
   };
 
   class Function {
@@ -267,6 +284,8 @@ namespace L2 {
       void accept(Visitor* v);
       void to_string();
       L2::fence_graph* interfence_graph;
+      L2::unordered_map<Variable, bool> was_created;
+      L2::unordered_map<Variable, bool> was_spilled;
   };
 
   class Program {

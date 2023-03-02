@@ -5,6 +5,7 @@
 namespace L2 {
 
     void spill(L2::Program &p);
+    void spill_all(L2::Function* fn);
     void print_spill(L2::Program &p);
 
     class spiller : public L2::Visitor {
