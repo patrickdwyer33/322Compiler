@@ -48,7 +48,7 @@ namespace L2 {
                 i->src = new_var;
             }
         } else {
-            L2::MemoryLocation* src_mem = dynamic_cast<L2::MemoryLocation*>(items[0]);
+            L2::MemoryLocation* src_mem = dynamic_cast<L2::MemoryLocation*>(items[1]);
             if (src_mem != NULL) {
                 src = static_cast<L2::Variable*>(src_mem->get()[0]);
                 if (*spill_var == *src) {
@@ -279,6 +279,24 @@ namespace L2 {
         spill_var = p.to_spill_var;
         for (auto& fn : p.functions) {
             fn->accept(&spill_visitor);
+        }
+        return;
+    }
+
+    void spill_all(L2::Function* fn) {
+        char cur_prefix_char = 'A';
+        std::string cur_prefix;
+        for (auto it : fn->interfence_graph->node_map) {
+            cur_prefix.push_back(cur_prefix_char);
+            spill_var = &it.second.var;
+            spill_prefix = cur_prefix;
+            fn->accept(&spill_visitor);
+            cur_prefix.pop_back();
+            cur_prefix_char++;
+            if (cur_prefix_char > 'Z') {
+                cur_prefix_char = 'A';
+                cur_prefix.push_back(cur_prefix_char);
+            }
         }
         return;
     }

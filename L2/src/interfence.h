@@ -5,6 +5,7 @@
 namespace L2 {
 
     void generate_fence(L2::Program &p);
+    void generate_fence_fn(L2::Function* fn);
     void print_fence(L2::Program &p);
 
     class fence_visitor : public L2::Visitor {

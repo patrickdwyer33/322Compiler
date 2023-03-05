@@ -400,6 +400,12 @@ namespace L2 {
         p.accept(&analyzer);
         return;
     }
+
+    void generate_liveness_fn(L2::Function* fn) {
+        fn->accept(&analyzer);
+        return;
+    }
+
     void print_liveness(L2::Program &p) {
         p.accept(&printer);
         return;

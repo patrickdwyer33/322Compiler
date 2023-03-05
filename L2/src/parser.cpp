@@ -427,8 +427,6 @@ namespace Parser {
       seps,
       argument_number,
       seps,
-      local_number,
-      seps,
       Instructions_rule,
       seps,
       pegtl::one< ')' >

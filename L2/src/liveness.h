@@ -6,6 +6,7 @@
 namespace L2 {
 
     void generate_liveness(L2::Program &p);
+    void generate_liveness_fn(L2::Function* fn);
     void print_liveness(L2::Program &p);
 
     class Liveness_Analyzer : public L2::Visitor {

@@ -76,7 +76,6 @@ namespace L2 {
     }
 
     void fence_visitor::visit(L2::Program* p) {
-        initialize_GP_registers();
         for (auto f: p->functions) {
             f->accept(&fence_builder);
         }
@@ -88,13 +87,12 @@ namespace L2 {
         L2::fence_graph* g = new L2::fence_graph();
         
         for (auto reg : GP_registers) {
-            L2::fence_node* n = new L2::fence_node();
-            n->var = &reg;
+            L2::fence_node* n = new L2::fence_node(reg);
             for (auto reg2 : GP_registers) {
                 if (reg == reg2) continue;
                 n->neighbors.insert(reg2);
             }
-            std::pair<std::string, L2::fence_node> node_entry = std::make_pair(reg.to_string(), *n);
+            std::pair<std::string, L2::fence_node> node_entry = std::make_pair(reg.get(), *n);
             g->node_map.insert(node_entry);
         }
 
@@ -103,58 +101,52 @@ namespace L2 {
             for (auto var : fn->ins[idx]) {
                 for (auto var2 : fn->ins[idx]) {
                     if (var == var2) continue;
-                    if (g->node_map.find(var.to_string()) == g->node_map.end()) {
-                        L2::fence_node* n = new L2::fence_node();
-                        n->var = &var;
-                        std::pair<std::string, L2::fence_node> node_entry = std::make_pair(var.to_string(), *n);
+                    if (g->node_map.find(var.get()) == g->node_map.end()) {
+                        L2::fence_node* n = new L2::fence_node(var);
+                        std::pair<std::string, L2::fence_node> node_entry = std::make_pair(var.get(), *n);
                         g->node_map.insert(node_entry);
                     }
-                    if (g->node_map.find(var2.to_string()) == g->node_map.end()) {
-                        L2::fence_node* n = new L2::fence_node();
-                        n->var = &var2;
-                        std::pair<std::string, L2::fence_node> node_entry = std::make_pair(var2.to_string(), *n);
+                    if (g->node_map.find(var2.get()) == g->node_map.end()) {
+                        L2::fence_node* n = new L2::fence_node(var2);
+                        std::pair<std::string, L2::fence_node> node_entry = std::make_pair(var2.get(), *n);
                         g->node_map.insert(node_entry);
                     }
-                    g->node_map[var.to_string()].neighbors.insert(var2);
-                    g->node_map[var2.to_string()].neighbors.insert(var);
+                    g->node_map[var.get()].neighbors.insert(var2);
+                    g->node_map[var2.get()].neighbors.insert(var);
                 }
             }
             for (auto var : fn->outs[idx]) {
                 for (auto var2 : fn->outs[idx]) {
                     if (var == var2) continue;
-                    if (g->node_map.find(var.to_string()) == g->node_map.end()) {
-                        L2::fence_node* n = new L2::fence_node();
-                        n->var = &var;
-                        std::pair<std::string, L2::fence_node> node_entry = std::make_pair(var.to_string(), *n);
+                    if (g->node_map.find(var.get()) == g->node_map.end()) {
+                        L2::fence_node* n = new L2::fence_node(var);
+                        std::pair<std::string, L2::fence_node> node_entry = std::make_pair(var.get(), *n);
                         g->node_map.insert(node_entry);
                     }
-                    if (g->node_map.find(var2.to_string()) == g->node_map.end()) {
-                        L2::fence_node* n = new L2::fence_node();
-                        n->var = &var2;
-                        std::pair<std::string, L2::fence_node> node_entry = std::make_pair(var2.to_string(), *n);
+                    if (g->node_map.find(var2.get()) == g->node_map.end()) {
+                        L2::fence_node* n = new L2::fence_node(var2);
+                        std::pair<std::string, L2::fence_node> node_entry = std::make_pair(var2.get(), *n);
                         g->node_map.insert(node_entry);
                     }
-                    g->node_map[var.to_string()].neighbors.insert(var2);
-                    g->node_map[var2.to_string()].neighbors.insert(var);
+                    g->node_map[var.get()].neighbors.insert(var2);
+                    g->node_map[var2.get()].neighbors.insert(var);
                 }
             }
             for (auto var : instr->kill) {
                 for (auto var2 : fn->outs[idx]) {
                     if (var == var2) continue;
-                    if (g->node_map.find(var.to_string()) == g->node_map.end()) {
-                        L2::fence_node* n = new L2::fence_node();
-                        n->var = &var;
-                        std::pair<std::string, L2::fence_node> node_entry = std::make_pair(var.to_string(), *n);
+                    if (g->node_map.find(var.get()) == g->node_map.end()) {
+                        L2::fence_node* n = new L2::fence_node(var);
+                        std::pair<std::string, L2::fence_node> node_entry = std::make_pair(var.get(), *n);
                         g->node_map.insert(node_entry);
                     }
-                    if (g->node_map.find(var2.to_string()) == g->node_map.end()) {
-                        L2::fence_node* n = new L2::fence_node();
-                        n->var = &var2;
-                        std::pair<std::string, L2::fence_node> node_entry = std::make_pair(var2.to_string(), *n);
+                    if (g->node_map.find(var2.get()) == g->node_map.end()) {
+                        L2::fence_node* n = new L2::fence_node(var2);
+                        std::pair<std::string, L2::fence_node> node_entry = std::make_pair(var2.get(), *n);
                         g->node_map.insert(node_entry);
                     }
-                    g->node_map[var.to_string()].neighbors.insert(var2);
-                    g->node_map[var2.to_string()].neighbors.insert(var);
+                    g->node_map[var.get()].neighbors.insert(var2);
+                    g->node_map[var2.get()].neighbors.insert(var);
                 }
             }
             L2::Instruction_operation* op_instr = dynamic_cast<L2::Instruction_operation*>(instr);
@@ -165,16 +157,15 @@ namespace L2 {
                     L2::Variable* var = dynamic_cast<L2::Variable*>(items[2]);
                     if (var != NULL) {
                         if (g->node_map.find(var->to_string()) == g->node_map.end()) {
-                            L2::fence_node* n = new L2::fence_node();
-                            n->var = var;
+                            L2::fence_node* n = new L2::fence_node(*var);
                             std::pair<std::string, L2::fence_node> node_entry = std::make_pair(var->to_string(), *n);
                             g->node_map.insert(node_entry);
                         }
                         for (auto reg : GP_registers) {
-                            if (reg.to_string() == "rcx") continue;
+                            if (reg.get() == "rcx") continue;
                             if (reg == *var) continue;
                             g->node_map[var->to_string()].neighbors.insert(reg);
-                            g->node_map[reg.to_string()].neighbors.insert(*var);
+                            g->node_map[reg.get()].neighbors.insert(*var);
                         }
                     }
                 }
@@ -248,7 +239,7 @@ namespace L2 {
         for (auto& x : fn->interfence_graph->node_map) {
             std::cout << x.first;
             for (auto var : x.second.neighbors) {
-                std::cout << " " << var.to_string();
+                std::cout << " " << var.get();
             }
             std::cout << "\n";
         }
@@ -256,9 +247,17 @@ namespace L2 {
     }
 
     void generate_fence(L2::Program &p) {
+        initialize_GP_registers();
         p.accept(&fence_builder);
         return;
     }
+
+    void generate_fence_fn(L2::Function* fn) {
+        initialize_GP_registers();
+        fn->accept(&fence_builder);
+        return;
+    }
+
     void print_fence(L2::Program &p) {
         p.accept(&f_printer);
         return;

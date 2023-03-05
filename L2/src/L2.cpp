@@ -350,6 +350,10 @@ namespace L2 {
     return this->arg;
   }
 
+  fence_node::fence_node(Variable var) {
+    this->var = var;
+  }
+
   void Function::to_string() {
     std::cout << "This is a function with name " << this->name << std::endl;
     std::cout << "and num_arguments " << std::to_string(this->arguments) << std::endl;

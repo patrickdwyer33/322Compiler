@@ -20,6 +20,7 @@
 #include <interfence.h>
 #include <code_generator.h>
 #include <spiller.h>
+#include <color_graph.h>
 
 void print_help (char *progName){
   std::cerr << "Usage: " << progName << " [-v] [-g 0|1] [-O 0|1|2] [-s] [-l] [-i] SOURCE" << std::endl;
@@ -124,7 +125,15 @@ int main(
    * Generate the target code.
    */
   if (enable_code_generator) {
-    //TODO
+    L2::generate_liveness(p);
+    L2::generate_fence(p);
+    L2::color_program(p);
+    L2::convert_stack_args(p);
+    std::string output_code = generate_code(p);
+    std::ofstream outputFile;
+    outputFile.open("prog.L1");
+    outputFile << output_code;
+    outputFile.close();
   }
   return 0;
 }
