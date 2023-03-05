@@ -37,9 +37,9 @@ namespace L2 {
         return;
     }
 
-    bool fence_cmp (const L2::fence_node& left, const L2::fence_node& right) {
-        uint64_t left_size = left.num_neighbors;
-        uint64_t right_size = right.num_neighbors;
+    bool fence_cmp (const L2::fence_node* left, const L2::fence_node* right) {
+        uint64_t left_size = left->num_neighbors;
+        uint64_t right_size = right->num_neighbors;
         if (left_size >= num_colors && right_size >= num_colors) {
           return left_size < right_size;
         }
@@ -60,7 +60,7 @@ namespace L2 {
         }
         //fn->interfence_graph->node_map.erase("");
         for (auto &it : fn->interfence_graph->node_map) {
-            it.second.num_neighbors = it.second.neighbors.size();
+            //it.second->num_neighbors = it.second->neighbors.size();
             fn->interfence_graph->sorted_fence_nodes.push_back(it.second);
         }
         std::sort(fn->interfence_graph->sorted_fence_nodes.begin(), fn->interfence_graph->sorted_fence_nodes.end(), fence_cmp);
@@ -71,9 +71,10 @@ namespace L2 {
         if (fn->interfence_graph->sorted_fence_nodes.empty()) {
             return;
         }
-        L2::fence_node to_remove = fn->interfence_graph->sorted_fence_nodes.back();
-        for (auto var : to_remove.neighbors) {
-            fn->interfence_graph->node_map[var.get()].num_neighbors -= 1;
+        L2::fence_node* to_remove = fn->interfence_graph->sorted_fence_nodes.back();
+        for (auto var : to_remove->neighbors) {
+            fn->interfence_graph->node_map[var.get()]->neighbors.erase(*to_remove->var);
+            fn->interfence_graph->node_map[var.get()]->num_neighbors -= 1;
         }
         fn->interfence_graph->sorted_fence_nodes.pop_back();
         return;
@@ -84,18 +85,18 @@ namespace L2 {
         bool cant_color = false;
         L2::sort_nodes(fn);
         L2::fence_graph prev_graph = *fn->interfence_graph;
-        std::unordered_map<std::string, L2::fence_node> new_node_map;
-        fn->interfence_graph->node_map = new_node_map;
+        std::unordered_map<std::string, L2::fence_node*> new_node_map;
+        fn->interfence_graph->node_map.clear();
         uint64_t num_nodes = fn->interfence_graph->sorted_fence_nodes.size();
         for (uint64_t i = 0; i < num_nodes; i++) {
             std::vector<uint64_t> neighbor_colors;
-            L2::fence_node cur_fence_node = fn->interfence_graph->sorted_fence_nodes.back();
-            if (color_map.find(cur_fence_node.var.get()) != color_map.end()) {
-                fn->interfence_graph->node_map[cur_fence_node.var.get()] = cur_fence_node;
+            L2::fence_node* cur_fence_node = fn->interfence_graph->sorted_fence_nodes.back();
+            if (color_map.find(cur_fence_node->var->get()) != color_map.end()) {
+                fn->interfence_graph->node_map[cur_fence_node->var->get()] = cur_fence_node;
                 remove_node(fn);
                 continue;
             }
-            for (auto &var : prev_graph.node_map[cur_fence_node.var.to_string()].neighbors) {
+            for (auto &var : prev_graph.node_map[cur_fence_node->var->to_string()]->neighbors) {
                 if (fn->interfence_graph->node_map.find(var.get()) != fn->interfence_graph->node_map.end()) {
                     if (color_map.find(var.get()) != color_map.end()) {
                         neighbor_colors.push_back(color_map[var.get()]);
@@ -105,17 +106,17 @@ namespace L2 {
             std::sort(neighbor_colors.begin(), neighbor_colors.end());
             for (uint64_t j = 0; j < num_colors; j++) {
                 if (j >= neighbor_colors.size()) {
-                    color_map[cur_fence_node.var.get()] = num_colors;
+                    color_map[cur_fence_node->var->get()] = num_colors;
                     cant_color = true;
                     break;
                 }
                 if (neighbor_colors[j] == j) continue;
                 else {
-                    color_map[cur_fence_node.var.get()] = j;
+                    color_map[cur_fence_node->var->get()] = j;
                     break;
                 }
             }
-            fn->interfence_graph->node_map[cur_fence_node.var.get()] = cur_fence_node;
+            fn->interfence_graph->node_map[cur_fence_node->var->get()] = cur_fence_node;
             remove_node(fn);
         }
         if (cant_color) {
@@ -137,7 +138,7 @@ namespace L2 {
         if (var1 != NULL) {
             L2::Register* reg_tstr = dynamic_cast<L2::Register*>(var1);
             if (reg_tstr == NULL) {
-                Architecture::RegisterID reg_id = sorted_colors[fence_graph_copy.node_map[var1->to_string()].color];
+                Architecture::RegisterID reg_id = sorted_colors[color_map[var1->to_string()]];
                 L2::Register* reg = new L2::Register(Architecture::to_string(reg_id), reg_id);
                 i->dst = reg;
             }
@@ -146,7 +147,7 @@ namespace L2 {
         if (var2 != NULL) {
             L2::Register* reg_tstr = dynamic_cast<L2::Register*>(var2);
             if (reg_tstr == NULL) {
-                Architecture::RegisterID reg_id = sorted_colors[fence_graph_copy.node_map[var2->to_string()].color];
+                Architecture::RegisterID reg_id = sorted_colors[color_map[var2->to_string()]];
                 L2::Register* reg = new L2::Register(Architecture::to_string(reg_id), reg_id);
                 i->src = reg;
             }
@@ -169,7 +170,7 @@ namespace L2 {
         if (var2 != NULL) {
             L2::Register* reg_tstr = dynamic_cast<L2::Register*>(var2);
             if (reg_tstr == NULL) {
-                Architecture::RegisterID reg_id = sorted_colors[fence_graph_copy.node_map[var2->to_string()].color];
+                Architecture::RegisterID reg_id = sorted_colors[color_map[var2->to_string()]];
             L2::Register* reg = new L2::Register(Architecture::to_string(reg_id), reg_id);
             i->right = reg;
             }
@@ -179,7 +180,7 @@ namespace L2 {
         if (var3 != NULL) {
             L2::Register* reg_tstr = dynamic_cast<L2::Register*>(var3);
             if (reg_tstr == NULL) {
-                Architecture::RegisterID reg_id = sorted_colors[fence_graph_copy.node_map[var3->to_string()].color];
+                Architecture::RegisterID reg_id = sorted_colors[color_map[var3->to_string()]];
             L2::Register* reg = new L2::Register(Architecture::to_string(reg_id), reg_id);
             i->lea_reg = reg;
             }
@@ -193,7 +194,7 @@ namespace L2 {
         if (var1 != NULL) {
             L2::Register* reg_tstr = dynamic_cast<L2::Register*>(var1);
             if (reg_tstr == NULL) {
-                Architecture::RegisterID reg_id = sorted_colors[fence_graph_copy.node_map[var1->to_string()].color];
+                Architecture::RegisterID reg_id = sorted_colors[color_map[var1->to_string()]];
             L2::Register* reg = new L2::Register(Architecture::to_string(reg_id), reg_id);
             i->dst = reg;
             }
@@ -203,7 +204,7 @@ namespace L2 {
         if (var2 != NULL) {
             L2::Register* reg_tstr = dynamic_cast<L2::Register*>(var2);
             if (reg_tstr == NULL) {
-                Architecture::RegisterID reg_id = sorted_colors[fence_graph_copy.node_map[var2->to_string()].color];
+                Architecture::RegisterID reg_id = sorted_colors[color_map[var2->to_string()]];
             L2::Register* reg = new L2::Register(Architecture::to_string(reg_id), reg_id);
             i->left = reg;
             }
@@ -213,7 +214,7 @@ namespace L2 {
         if (var3 != NULL) {
             L2::Register* reg_tstr = dynamic_cast<L2::Register*>(var3);
             if (reg_tstr == NULL) {
-                Architecture::RegisterID reg_id = sorted_colors[fence_graph_copy.node_map[var3->to_string()].color];
+                Architecture::RegisterID reg_id = sorted_colors[color_map[var3->to_string()]];
             L2::Register* reg = new L2::Register(Architecture::to_string(reg_id), reg_id);
             i->right = reg;
             }
@@ -227,7 +228,7 @@ namespace L2 {
         if (var1 != NULL) {
             L2::Register* reg_tstr = dynamic_cast<L2::Register*>(var1);
             if (reg_tstr == NULL) {
-                Architecture::RegisterID reg_id = sorted_colors[fence_graph_copy.node_map[var1->to_string()].color];
+                Architecture::RegisterID reg_id = sorted_colors[color_map[var1->to_string()]];
             L2::Register* reg = new L2::Register(Architecture::to_string(reg_id), reg_id);
             i->left = reg;
             }
@@ -237,7 +238,7 @@ namespace L2 {
         if (var2 != NULL) {
             L2::Register* reg_tstr = dynamic_cast<L2::Register*>(var2);
             if (reg_tstr == NULL) {
-                Architecture::RegisterID reg_id = sorted_colors[fence_graph_copy.node_map[var2->to_string()].color];
+                Architecture::RegisterID reg_id = sorted_colors[color_map[var2->to_string()]];
             L2::Register* reg = new L2::Register(Architecture::to_string(reg_id), reg_id);
             i->right = reg;
             }
@@ -259,7 +260,7 @@ namespace L2 {
         if (var != NULL) {
             L2::Register* reg_tstr = dynamic_cast<L2::Register*>(var);
             if (reg_tstr == NULL) {
-                Architecture::RegisterID reg_id = sorted_colors[fence_graph_copy.node_map[var->to_string()].color];
+                Architecture::RegisterID reg_id = sorted_colors[color_map[var->to_string()]];
             L2::Register* reg = new L2::Register(Architecture::to_string(reg_id), reg_id);
             i->fn = reg;
             }

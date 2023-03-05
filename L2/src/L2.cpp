@@ -350,8 +350,10 @@ namespace L2 {
     return this->arg;
   }
 
-  fence_node::fence_node(Variable var) {
-    this->var = var;
+  fence_node::fence_node(L2::Variable var) {
+    this->var = &var;
+    this->num_neighbors = 0;
+    this->color = 15;
   }
 
   void Function::to_string() {

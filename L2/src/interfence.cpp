@@ -82,18 +82,77 @@ namespace L2 {
         return;
     }
 
+    void add_fence_nodes(std::unordered_map<std::string, L2::fence_node*> &map, L2::Variable &var, L2::Variable &var2) 
+    {
+        bool found_first = false;
+        bool found_second = false;
+        if (map.find(var.get()) != map.end()) {
+            found_first = true;
+            L2::fence_node* node = map[var.get()];
+            if (node->neighbors.find(var2.get()) == node->neighbors.end()) {
+                node->neighbors.insert(var2);
+                node->num_neighbors += 1;
+            }
+        }
+        if (map.find(var2.get()) != map.end()) {
+            found_second = true;
+            L2::fence_node* node = map[var2.get()];
+            if (node->neighbors.find(var.get()) == node->neighbors.end()) {
+                node->neighbors.insert(var);
+                node->num_neighbors += 1;
+            }
+        }
+        if (found_first && found_second) {
+            return;
+        }
+        else if (found_second) {
+            // add first
+            L2::fence_node* node = new L2::fence_node(var);
+            map[var.get()] = node;
+            if (node->neighbors.find(var2.get()) == node->neighbors.end()) {
+                node->neighbors.insert(var2);
+                node->num_neighbors += 1;
+            }
+        }
+        else if (found_first) {
+            // add second
+            L2::fence_node* node = new L2::fence_node(var2);
+            map[var2.get()] = node;
+            if (node->neighbors.find(var.get()) == node->neighbors.end()) {
+            node->neighbors.insert(var);
+            node->num_neighbors += 1;
+            }
+        }
+        else {
+            // add first
+            L2::fence_node* node = new L2::fence_node(var);
+            map[var.get()] = node;
+            if (node->neighbors.find(var2.get()) == node->neighbors.end()) {
+                node->neighbors.insert(var2);
+                node->num_neighbors += 1;
+            }
+            // add second
+            L2::fence_node* node2 = new L2::fence_node(var2);
+            map[var2.get()] = node2;
+            if (node2->neighbors.find(var.get()) == node2->neighbors.end()) {
+            node2->neighbors.insert(var);
+            node2->num_neighbors += 1;
+            }
+        }
+        
+        
+        return;
+    }
+
     void fence_visitor::visit(L2::Function* fn) {
 
         L2::fence_graph* g = new L2::fence_graph();
         
         for (auto reg : GP_registers) {
-            L2::fence_node* n = new L2::fence_node(reg);
             for (auto reg2 : GP_registers) {
                 if (reg == reg2) continue;
-                n->neighbors.insert(reg2);
+                add_fence_nodes(g->node_map, reg, reg2);
             }
-            std::pair<std::string, L2::fence_node> node_entry = std::make_pair(reg.get(), *n);
-            g->node_map.insert(node_entry);
         }
 
         for (int idx = 0; idx < fn->instructions.size(); idx++) {
@@ -101,52 +160,19 @@ namespace L2 {
             for (auto var : fn->ins[idx]) {
                 for (auto var2 : fn->ins[idx]) {
                     if (var == var2) continue;
-                    if (g->node_map.find(var.get()) == g->node_map.end()) {
-                        L2::fence_node* n = new L2::fence_node(var);
-                        std::pair<std::string, L2::fence_node> node_entry = std::make_pair(var.get(), *n);
-                        g->node_map.insert(node_entry);
-                    }
-                    if (g->node_map.find(var2.get()) == g->node_map.end()) {
-                        L2::fence_node* n = new L2::fence_node(var2);
-                        std::pair<std::string, L2::fence_node> node_entry = std::make_pair(var2.get(), *n);
-                        g->node_map.insert(node_entry);
-                    }
-                    g->node_map[var.get()].neighbors.insert(var2);
-                    g->node_map[var2.get()].neighbors.insert(var);
+                    add_fence_nodes(g->node_map, var, var2);
                 }
             }
             for (auto var : fn->outs[idx]) {
                 for (auto var2 : fn->outs[idx]) {
                     if (var == var2) continue;
-                    if (g->node_map.find(var.get()) == g->node_map.end()) {
-                        L2::fence_node* n = new L2::fence_node(var);
-                        std::pair<std::string, L2::fence_node> node_entry = std::make_pair(var.get(), *n);
-                        g->node_map.insert(node_entry);
-                    }
-                    if (g->node_map.find(var2.get()) == g->node_map.end()) {
-                        L2::fence_node* n = new L2::fence_node(var2);
-                        std::pair<std::string, L2::fence_node> node_entry = std::make_pair(var2.get(), *n);
-                        g->node_map.insert(node_entry);
-                    }
-                    g->node_map[var.get()].neighbors.insert(var2);
-                    g->node_map[var2.get()].neighbors.insert(var);
+                    add_fence_nodes(g->node_map, var, var2);
                 }
             }
             for (auto var : instr->kill) {
                 for (auto var2 : fn->outs[idx]) {
                     if (var == var2) continue;
-                    if (g->node_map.find(var.get()) == g->node_map.end()) {
-                        L2::fence_node* n = new L2::fence_node(var);
-                        std::pair<std::string, L2::fence_node> node_entry = std::make_pair(var.get(), *n);
-                        g->node_map.insert(node_entry);
-                    }
-                    if (g->node_map.find(var2.get()) == g->node_map.end()) {
-                        L2::fence_node* n = new L2::fence_node(var2);
-                        std::pair<std::string, L2::fence_node> node_entry = std::make_pair(var2.get(), *n);
-                        g->node_map.insert(node_entry);
-                    }
-                    g->node_map[var.get()].neighbors.insert(var2);
-                    g->node_map[var2.get()].neighbors.insert(var);
+                    add_fence_nodes(g->node_map, var, var2);
                 }
             }
             L2::Instruction_operation* op_instr = dynamic_cast<L2::Instruction_operation*>(instr);
@@ -156,16 +182,10 @@ namespace L2 {
                 if (op->get() == Architecture::OP::shift_left || op->get() == Architecture::OP::shift_right) {
                     L2::Variable* var = dynamic_cast<L2::Variable*>(items[2]);
                     if (var != NULL) {
-                        if (g->node_map.find(var->to_string()) == g->node_map.end()) {
-                            L2::fence_node* n = new L2::fence_node(*var);
-                            std::pair<std::string, L2::fence_node> node_entry = std::make_pair(var->to_string(), *n);
-                            g->node_map.insert(node_entry);
-                        }
                         for (auto reg : GP_registers) {
                             if (reg.get() == "rcx") continue;
                             if (reg == *var) continue;
-                            g->node_map[var->to_string()].neighbors.insert(reg);
-                            g->node_map[reg.get()].neighbors.insert(*var);
+                            add_fence_nodes(g->node_map, *var, reg);
                         }
                     }
                 }
@@ -236,9 +256,9 @@ namespace L2 {
     }
 
     void fence_printer::visit(L2::Function* fn) {
-        for (auto& x : fn->interfence_graph->node_map) {
+        for (auto x : fn->interfence_graph->node_map) {
             std::cout << x.first;
-            for (auto var : x.second.neighbors) {
+            for (auto &var : x.second->neighbors) {
                 std::cout << " " << var.get();
             }
             std::cout << "\n";

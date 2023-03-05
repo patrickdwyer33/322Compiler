@@ -242,9 +242,8 @@ namespace L2 {
 
   class fence_node {
     public:
-      //figure out how to represent this so the compliler doesn't freak out
-      fence_node(std::string s);
-      L2::Variable var;
+      fence_node(L2::Variable var);
+      L2::Variable* var;
       std::unordered_set<L2::Variable, Variable::HashFunction> neighbors;
       uint64_t num_neighbors;
       uint64_t color;
@@ -253,8 +252,8 @@ namespace L2 {
   class fence_graph {
     public:
       uint64_t length;
-      std::unordered_map<std::string, L2::fence_node> node_map;
-      std::vector<L2::fence_node> sorted_fence_nodes;
+      std::unordered_map<std::string, L2::fence_node*> node_map;
+      std::vector<L2::fence_node*> sorted_fence_nodes;
   };
 
   class Function {
