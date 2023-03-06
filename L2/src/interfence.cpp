@@ -82,7 +82,7 @@ namespace L2 {
         return;
     }
 
-    void add_fence_nodes(std::unordered_map<std::string, L2::fence_node*> &map, L2::Variable &var, L2::Variable &var2) 
+    void add_fence_nodes(std::unordered_map<std::string, L2::fence_node*> &map, const L2::Variable &var, const L2::Variable &var2) 
     {
         bool found_first = false;
         bool found_second = false;
@@ -148,8 +148,8 @@ namespace L2 {
 
         L2::fence_graph* g = new L2::fence_graph();
         
-        for (auto reg : GP_registers) {
-            for (auto reg2 : GP_registers) {
+        for (auto &reg : GP_registers) {
+            for (auto &reg2 : GP_registers) {
                 if (reg == reg2) continue;
                 add_fence_nodes(g->node_map, reg, reg2);
             }
@@ -157,20 +157,20 @@ namespace L2 {
 
         for (int idx = 0; idx < fn->instructions.size(); idx++) {
             auto instr = fn->instructions[idx];
-            for (auto var : fn->ins[idx]) {
-                for (auto var2 : fn->ins[idx]) {
+            for (auto &var : fn->ins[idx]) {
+                for (auto &var2 : fn->ins[idx]) {
                     if (var == var2) continue;
                     add_fence_nodes(g->node_map, var, var2);
                 }
             }
-            for (auto var : fn->outs[idx]) {
-                for (auto var2 : fn->outs[idx]) {
+            for (auto &var : fn->outs[idx]) {
+                for (auto &var2 : fn->outs[idx]) {
                     if (var == var2) continue;
                     add_fence_nodes(g->node_map, var, var2);
                 }
             }
-            for (auto var : instr->kill) {
-                for (auto var2 : fn->outs[idx]) {
+            for (auto &var : instr->kill) {
+                for (auto &var2 : fn->outs[idx]) {
                     if (var == var2) continue;
                     add_fence_nodes(g->node_map, var, var2);
                 }
@@ -182,7 +182,7 @@ namespace L2 {
                 if (op->get() == Architecture::OP::shift_left || op->get() == Architecture::OP::shift_right) {
                     L2::Variable* var = dynamic_cast<L2::Variable*>(items[2]);
                     if (var != NULL) {
-                        for (auto reg : GP_registers) {
+                        for (auto &reg : GP_registers) {
                             if (reg.get() == "rcx") continue;
                             if (reg == *var) continue;
                             add_fence_nodes(g->node_map, *var, reg);

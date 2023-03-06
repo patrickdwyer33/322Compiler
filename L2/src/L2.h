@@ -51,6 +51,7 @@ namespace L2 {
           return std::hash<std::string>{}(var.s);
         }
       };
+    protected:
       std::string s;
   };
 
@@ -251,9 +252,7 @@ namespace L2 {
 
   class fence_graph {
     public:
-      uint64_t length;
       std::unordered_map<std::string, L2::fence_node*> node_map;
-      std::vector<L2::fence_node*> sorted_fence_nodes;
   };
 
   class Function {
@@ -279,6 +278,7 @@ namespace L2 {
       L2::Variable* prefix_var;
       L2::Variable* to_spill_var;
       std::vector<Function *> functions;
+      std::unordered_map<std::string, L2::Variable> singletons;
       void accept(Visitor* v);
       void to_string();
   };

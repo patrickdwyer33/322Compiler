@@ -293,11 +293,11 @@ namespace L2 {
                 std::unordered_set<L2::Variable, Variable::HashFunction> new_in = fn->instructions[i]->gen;
                 std::unordered_set<L2::Variable, Variable::HashFunction> new_out;
                 for (auto idx: fn->instructions[i]->succs) {
-                    for (auto v: fn->ins[idx]) {
+                    for (auto &v: fn->ins[idx]) {
                         new_out.insert(v);
                     }
                 }
-                for (auto v: new_out) {
+                for (auto &v: new_out) {
                     if (fn->instructions[i]->kill.find(v) == fn->instructions[i]->kill.end()) {
                         new_in.insert(v);
                     }

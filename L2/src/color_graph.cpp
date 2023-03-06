@@ -7,6 +7,7 @@
 #include <iostream>
 #include <vector>
 #include <queue>
+#include <cassert>
 
 namespace L2 {
 
@@ -54,49 +55,51 @@ namespace L2 {
         }
       }
 
-    void sort_nodes(L2::Function* fn) {
-        if (!fn->interfence_graph->sorted_fence_nodes.empty()) {
-            fn->interfence_graph->sorted_fence_nodes.clear();
+    void sort_nodes(std::vector<L2::fence_node*> &sorted_fence_nodes, const std::unordered_map<std::string, L2::fence_node*> &node_map) {
+        if (!sorted_fence_nodes.empty()) {
+            sorted_fence_nodes.clear();
         }
-        //fn->interfence_graph->node_map.erase("");
-        for (auto &it : fn->interfence_graph->node_map) {
-            //it.second->num_neighbors = it.second->neighbors.size();
-            fn->interfence_graph->sorted_fence_nodes.push_back(it.second);
+        for (auto it : node_map) {
+            sorted_fence_nodes.push_back(it.second);
         }
-        std::sort(fn->interfence_graph->sorted_fence_nodes.begin(), fn->interfence_graph->sorted_fence_nodes.end(), fence_cmp);
+        std::sort(sorted_fence_nodes.begin(), sorted_fence_nodes.end(), fence_cmp);
         return;
     }
 
-    void remove_node(L2::Function* fn) {
-        if (fn->interfence_graph->sorted_fence_nodes.empty()) {
+    void remove_node(std::vector<L2::fence_node*> &sorted_fence_nodes, std::unordered_map<std::string, L2::fence_node*> &node_map) {
+        if (sorted_fence_nodes.empty()) {
             return;
         }
-        L2::fence_node* to_remove = fn->interfence_graph->sorted_fence_nodes.back();
+        L2::fence_node* to_remove = sorted_fence_nodes.back();
         for (auto var : to_remove->neighbors) {
-            fn->interfence_graph->node_map[var.get()]->neighbors.erase(*to_remove->var);
-            fn->interfence_graph->node_map[var.get()]->num_neighbors -= 1;
+            assert(node_map.find(var.get()) != node_map.end());
+            node_map[var.get()]->neighbors.erase(*to_remove->var);
+            node_map[var.get()]->num_neighbors -= 1;
         }
-        fn->interfence_graph->sorted_fence_nodes.pop_back();
+        sorted_fence_nodes.pop_back();
         return;
     }
 
     void color_function(L2::Function* fn) {
         initiate_color_order();
         bool cant_color = false;
-        L2::sort_nodes(fn);
-        L2::fence_graph prev_graph = *fn->interfence_graph;
-        std::unordered_map<std::string, L2::fence_node*> new_node_map;
+        std::vector<L2::fence_node*> sorted_fence_nodes;
+        std::unordered_map<std::string, L2::fence_node*> old_map;
+        old_map.swap(fn->interfence_graph->node_map);
+        sort_nodes(sorted_fence_nodes, old_map);
+        L2::Variable* r10 = old_map["r10"]->var;
+        std::cout << r10->get() << std::endl;
         fn->interfence_graph->node_map.clear();
-        uint64_t num_nodes = fn->interfence_graph->sorted_fence_nodes.size();
+        uint64_t num_nodes = sorted_fence_nodes.size();
         for (uint64_t i = 0; i < num_nodes; i++) {
             std::vector<uint64_t> neighbor_colors;
-            L2::fence_node* cur_fence_node = fn->interfence_graph->sorted_fence_nodes.back();
+            L2::fence_node* cur_fence_node = sorted_fence_nodes.back();
             if (color_map.find(cur_fence_node->var->get()) != color_map.end()) {
                 fn->interfence_graph->node_map[cur_fence_node->var->get()] = cur_fence_node;
-                remove_node(fn);
+                remove_node(sorted_fence_nodes, fn->interfence_graph->node_map);
                 continue;
             }
-            for (auto &var : prev_graph.node_map[cur_fence_node->var->to_string()]->neighbors) {
+            for (auto &var : old_map[cur_fence_node->var->to_string()]->neighbors) {
                 if (fn->interfence_graph->node_map.find(var.get()) != fn->interfence_graph->node_map.end()) {
                     if (color_map.find(var.get()) != color_map.end()) {
                         neighbor_colors.push_back(color_map[var.get()]);
@@ -117,15 +120,17 @@ namespace L2 {
                 }
             }
             fn->interfence_graph->node_map[cur_fence_node->var->get()] = cur_fence_node;
-            remove_node(fn);
+            remove_node(sorted_fence_nodes, fn->interfence_graph->node_map);
         }
-        if (cant_color) {
-            fn->interfence_graph = &prev_graph;
+        /*if (cant_color) {
+            std::cout << "HMMMMMM\n";
+            fn->interfence_graph->node_map = old_map;
             L2::spill_all(fn);
             generate_liveness_fn(fn);
             generate_fence_fn(fn);
             color_function(fn);
-        }
+        }*/
+        return;
     }
 
     void colorer_visitor::visit(L2::Instruction_return* i) {
