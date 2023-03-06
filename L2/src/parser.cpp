@@ -575,7 +575,10 @@ namespace Parser {
       std::string s = in.string();
       Architecture::RegisterID reg_id = Architecture::reg_from_string(s);
       L2::Register* r = new L2::Register(s, reg_id);
-      p.singletons.try_emplace(in.string(), *r);
+      /*if (p.singletons.find(r) == p.singletons.end()) {
+        p.singletons.emplace(in.string(), r);
+      }*/
+      //p.singletons.try_emplace(in.string(), *r);
       parsed_items.push_back(r);
     }
   };
@@ -584,7 +587,7 @@ namespace Parser {
     template<typename Input>
     static void apply( const Input & in, L2::Program & p) {
       L2::Variable* v = new L2::Variable(in.string());
-      p.singletons.try_emplace(in.string(), *v);
+      //p.singletons.try_emplace(in.string(), *v);
       parsed_items.push_back(v);
     }
   };

@@ -10,25 +10,25 @@ namespace L2 {
     L2::Liveness_Analyzer analyzer;
     L2::Liveness_Printer printer;
 
-    std::unordered_set<L2::Variable, Variable::HashFunction> caller_save_vars;
+    std::unordered_set<L2::Variable*> caller_save_vars;
 
     void initialize_caller_save_vars() {
         caller_save_vars.clear();
         auto caller_save_registers = Architecture::get_caller_save_registers();
         for (auto reg: caller_save_registers) {
             L2::Register* reg_var = new L2::Register(Architecture::to_string(reg), reg);
-            caller_save_vars.insert(*reg_var);
+            caller_save_vars.insert(reg_var);
         }
     }
 
-    std::unordered_set<L2::Variable, Variable::HashFunction> callee_save_vars;
+    std::unordered_set<L2::Variable*> callee_save_vars;
 
     void initialize_callee_save_vars() {
         callee_save_vars.clear();
         auto callee_save_registers = Architecture::get_callee_save_registers();
         for (auto reg: callee_save_registers) {
             L2::Register* reg_var = new L2::Register(Architecture::to_string(reg), reg);
-            callee_save_vars.insert(*reg_var);
+            callee_save_vars.insert(reg_var);
         }
     }
 
@@ -46,7 +46,7 @@ namespace L2 {
         i->kill.clear();
         i->gen = callee_save_vars;
         L2::Register* rax = new L2::Register(Architecture::to_string(Architecture::RegisterID::rax), Architecture::RegisterID::rax);
-        i->gen.insert(*rax);
+        i->gen.insert(rax);
         return;
     }
     void Liveness_Analyzer::visit(L2::Instruction_assignment* i) {
@@ -58,25 +58,25 @@ namespace L2 {
         std::vector<L2::Item*> items = i->get();
         L2::Variable* v1 = dynamic_cast<L2::Variable*>(items[0]);
         if (v1 != NULL) {
-            i->kill.insert(*v1);
+            i->kill.insert(v1);
         } else {
             L2::MemoryLocation* mem = dynamic_cast<L2::MemoryLocation*>(items[0]);
             if (mem != NULL) {
                 L2::Variable* x = static_cast<L2::Variable*>(mem->get()[0]);
                 if (x->get() != "rsp") {
-                    i->gen.insert(*x);
+                    i->gen.insert(x);
                 }
             }
         }
         L2::Variable* v2 = dynamic_cast<L2::Variable*>(items[1]);
         if (v2 != NULL) {
-            i->gen.insert(*v2);
+            i->gen.insert(v2);
         } else {
             L2::MemoryLocation* mem = dynamic_cast<L2::MemoryLocation*>(items[1]);
             if (mem != NULL) {
                 L2::Variable* x = static_cast<L2::Variable*>(mem->get()[0]);
                 if (x->get() != "rsp") {
-                    i->gen.insert(*x);
+                    i->gen.insert(x);
                 }
             }
         }
@@ -93,37 +93,37 @@ namespace L2 {
         L2::NullItem* second = dynamic_cast<L2::NullItem*>(items[2]);
         L2::NullItem* third = dynamic_cast<L2::NullItem*>(items[3]);
         if (dst != NULL && second != NULL) {
-            i->kill.insert(*dst);
-            i->gen.insert(*dst);
+            i->kill.insert(dst);
+            i->gen.insert(dst);
             return;
         } else if (dst == NULL) {
             L2::MemoryLocation* mem = static_cast<L2::MemoryLocation*>(items[0]);
             dst = static_cast<L2::Variable*>(mem->get()[0]);
             if (dst->get() != "rsp") {
-                i->gen.insert(*dst);
+                i->gen.insert(dst);
             }
         } else if (third == NULL) {
-            i->kill.insert(*dst);
+            i->kill.insert(dst);
         } else {
-            i->kill.insert(*dst);
-            i->gen.insert(*dst);
+            i->kill.insert(dst);
+            i->gen.insert(dst);
         }
         L2::Variable* v1 = dynamic_cast<L2::Variable*>(items[2]);
         if (v1 != NULL) {
-            i->gen.insert(*v1);
+            i->gen.insert(v1);
         } else {
             L2::MemoryLocation* mem = dynamic_cast<L2::MemoryLocation*>(items[2]);
             if (mem != NULL) {
                 L2::Variable* x = static_cast<L2::Variable*>(mem->get()[0]);
                 if (x->get() != "rsp") {
-                    i->gen.insert(*x);
+                    i->gen.insert(x);
                 }
                 return;
             }
         }
         L2::Variable* v2 = dynamic_cast<L2::Variable*>(items[3]);
         if (v2 != NULL) {
-            i->gen.insert(*v2);
+            i->gen.insert(v2);
         }
         return;
     }
@@ -135,14 +135,14 @@ namespace L2 {
         i->succs.insert(succ);
         std::vector<L2::Item*> items = i->get();
         L2::Variable* dst = static_cast<L2::Variable*>(items[0]);
-        i->kill.insert(*dst);
+        i->kill.insert(dst);
         L2::Variable* v1 = dynamic_cast<L2::Variable*>(items[1]);
         if (v1 != NULL) {
-            i->gen.insert(*v1);
+            i->gen.insert(v1);
         }
         L2::Variable* v2 = dynamic_cast<L2::Variable*>(items[3]);
         if (v2 != NULL) {
-            i->gen.insert(*v2);
+            i->gen.insert(v2);
         }
         return;
     }
@@ -153,11 +153,11 @@ namespace L2 {
         std::vector<L2::Item*> items = i->get();
         L2::Variable* v1 = dynamic_cast<L2::Variable*>(items[0]);
         if (v1 != NULL) {
-            i->gen.insert(*v1);
+            i->gen.insert(v1);
         }
         L2::Variable* v2 = dynamic_cast<L2::Variable*>(items[2]);
         if (v2 != NULL) {
-            i->gen.insert(*v2);
+            i->gen.insert(v2);
         }
         int succ = i->idx + 1;
         i->succs.insert(succ);
@@ -191,7 +191,7 @@ namespace L2 {
             if (idx < 6) {
                 Architecture::RegisterID reg = first_6_vars_map[idx];
                 L2::Register* reg_var = new L2::Register(Architecture::to_string(reg), reg);
-                i->gen.insert(*reg_var);
+                i->gen.insert(reg_var);
             } else {
                 break;
             }
@@ -199,7 +199,7 @@ namespace L2 {
         i->kill = caller_save_vars;
         L2::Variable* fn_called = dynamic_cast<L2::Variable*>(items[0]);
         if (fn_called != NULL) {
-            i->gen.insert(*fn_called);
+            i->gen.insert(fn_called);
         }
         return;
     }
@@ -210,7 +210,7 @@ namespace L2 {
         i->kill = caller_save_vars;
         i->gen.clear();
         L2::Register* rdi_var = new L2::Register(Architecture::to_string(Architecture::RegisterID::rdi), Architecture::RegisterID::rdi);
-        i->gen.insert(*rdi_var);
+        i->gen.insert(rdi_var);
         return;
     }
     void Liveness_Analyzer::visit(L2::Instruction_call_input* i) {
@@ -227,9 +227,9 @@ namespace L2 {
         i->succs.insert(succ);
         i->kill = caller_save_vars;
         L2::Register* rdi_var = new L2::Register(Architecture::to_string(Architecture::RegisterID::rdi), Architecture::RegisterID::rdi);
-        i->gen.insert(*rdi_var);
+        i->gen.insert(rdi_var);
         L2::Register* rsi_var = new L2::Register(Architecture::to_string(Architecture::RegisterID::rsi), Architecture::RegisterID::rsi);
-        i->gen.insert(*rsi_var);
+        i->gen.insert(rsi_var);
         return;
     }
     void Liveness_Analyzer::visit(L2::Instruction_call_tensorError* i) {
@@ -244,7 +244,7 @@ namespace L2 {
             if (idx < 6) {
                 Architecture::RegisterID reg = first_6_vars_map[idx];
                 L2::Register* reg_var = new L2::Register(Architecture::to_string(reg), reg);
-                i->gen.insert(*reg_var);
+                i->gen.insert(reg_var);
             } else {
                 break;
             }
@@ -281,17 +281,17 @@ namespace L2 {
         fn->ins.clear();
         fn->outs.clear();
         for (int i = 0; i < fn->instructions.size(); i++) {
-            std::unordered_set<L2::Variable, Variable::HashFunction> in;
+            std::unordered_set<L2::Variable*> in;
             fn->ins.push_back(in);
-            std::unordered_set<L2::Variable, Variable::HashFunction> out;
+            std::unordered_set<L2::Variable*> out;
             fn->outs.push_back(out);
         }
         bool changed = true;
         while (changed) {
             changed = false;
             for (int i = fn->instructions.size() - 1; i >= 0; i--) {
-                std::unordered_set<L2::Variable, Variable::HashFunction> new_in = fn->instructions[i]->gen;
-                std::unordered_set<L2::Variable, Variable::HashFunction> new_out;
+                std::unordered_set<L2::Variable*> new_in = fn->instructions[i]->gen;
+                std::unordered_set<L2::Variable*> new_out;
                 for (auto idx: fn->instructions[i]->succs) {
                     for (auto &v: fn->ins[idx]) {
                         new_out.insert(v);
@@ -381,12 +381,12 @@ namespace L2 {
         for (int i = 0; i < fn->instructions.size(); i++) {
             std::cout << "(";
             for (auto v: fn->ins[i]) {
-                std::cout << v.to_string() << " ";
+                std::cout << v->to_string() << " ";
             }
             std::cout<< ")\n";
             out_string.append("(");
             for (auto v: fn->outs[i]) {
-                out_string.append(v.to_string());
+                out_string.append(v->to_string());
                 out_string.append(" ");
             }
             out_string.append(")\n");

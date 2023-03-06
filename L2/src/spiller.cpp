@@ -254,13 +254,13 @@ namespace L2 {
                 if (instr->var_is_read) {
                     fn->instructions.insert(std::next(it, idx + num_added), new_ass_to_load);
                     num_added++;
-                    fn->was_created[*var] = true;
+                    fn->was_created[var->get()] = true;
                 }
                 if (instr->var_is_modified) {
                     it = fn->instructions.begin();
                     fn->instructions.insert(std::next(it, idx + num_added + 1), new_ass_to_store);
                     num_added++;
-                    fn->was_created[*var] = true;
+                    fn->was_created[var->get()] = true;
                 }
                 cur_var_counter++;
                 //it = fn->instructions.begin();
@@ -288,7 +288,7 @@ namespace L2 {
         std::string cur_prefix;
         for (auto it : fn->interfence_graph->node_map) {
             cur_prefix.push_back(cur_prefix_char);
-            spill_var = it.second->var;
+            spill_var = it.second.var;
             spill_prefix = cur_prefix;
             fn->accept(&spill_visitor);
             cur_prefix.pop_back();

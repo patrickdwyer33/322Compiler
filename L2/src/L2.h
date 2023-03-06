@@ -46,11 +46,11 @@ namespace L2 {
         if (this->s == other.s) return true;
         else return false;
       }
-      struct HashFunction {
+      /*struct HashFunction {
         size_t operator()(const Variable& var) const {
           return std::hash<std::string>{}(var.s);
         }
-      };
+      };*/
     protected:
       std::string s;
   };
@@ -111,8 +111,8 @@ namespace L2 {
     public:
       virtual std::string to_string() = 0;
       virtual void accept(Visitor* v) = 0;
-      std::unordered_set<Variable, Variable::HashFunction> gen;
-      std::unordered_set<Variable, Variable::HashFunction> kill;
+      std::unordered_set<Variable*> gen;
+      std::unordered_set<Variable*> kill;
       int idx;
       std::unordered_set<int> succs;
       bool contains_var;
@@ -243,16 +243,16 @@ namespace L2 {
 
   class fence_node {
     public:
-      fence_node(L2::Variable var);
+      fence_node(L2::Variable* var);
       L2::Variable* var;
-      std::unordered_set<L2::Variable, Variable::HashFunction> neighbors;
+      std::unordered_set<L2::Variable*> neighbors;
       uint64_t num_neighbors;
       uint64_t color;
   };
 
   class fence_graph {
     public:
-      std::unordered_map<std::string, L2::fence_node*> node_map;
+      std::unordered_map<std::string, L2::fence_node> node_map;
   };
 
   class Function {
@@ -261,15 +261,15 @@ namespace L2 {
       int64_t arguments;
       int64_t locals;
       std::vector<Instruction *> instructions;
-      std::vector<std::unordered_set<Variable, Variable::HashFunction>> ins;
-      std::vector<std::unordered_set<Variable, Variable::HashFunction>> outs;
+      std::vector<std::unordered_set<Variable*>> ins;
+      std::vector<std::unordered_set<Variable*>> outs;
       // can get this info in the parser by updating it whenever we find a label according to the number of instructions in currentF
       std::unordered_map<std::string, int> label_map;
       void accept(Visitor* v);
       void to_string();
       L2::fence_graph* interfence_graph;
-      std::unordered_map<Variable, bool, Variable::HashFunction> was_created;
-      std::unordered_map<Variable, bool, Variable::HashFunction> was_spilled;
+      std::unordered_map<std::string, bool> was_created;
+      std::unordered_map<std::string, bool> was_spilled;
   };
 
   class Program {
@@ -278,7 +278,7 @@ namespace L2 {
       L2::Variable* prefix_var;
       L2::Variable* to_spill_var;
       std::vector<Function *> functions;
-      std::unordered_map<std::string, L2::Variable> singletons;
+      std::unordered_map<std::string, Variable*> singletons;
       void accept(Visitor* v);
       void to_string();
   };
