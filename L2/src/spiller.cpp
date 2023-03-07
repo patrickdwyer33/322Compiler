@@ -4,6 +4,8 @@
 #include <iterator>
 #include <iostream>
 #include <code_generator.h>
+#include <Architecture.h>
+#include <unordered_set>
 
 namespace L2 {
 
@@ -127,7 +129,7 @@ namespace L2 {
         L2::Variable* left_var = dynamic_cast<L2::Variable*>(items[1]);
         L2::Variable* right_var = dynamic_cast<L2::Variable*>(items[3]);
         if (dst_var != NULL) {
-            if (*spill_var == *left_var) {
+            if (*spill_var == *dst_var) {
                 i->contains_var = true;
                 i->var_is_modified = true;
                 L2::Variable* new_var = new L2::Variable(spill_prefix + std::to_string(cur_var_counter));
@@ -283,12 +285,36 @@ namespace L2 {
         return;
     }
 
+    std::unordered_map<std::string, bool> reg_tester;
+
+    void initialize_reg_tester() {
+        auto calle_regs = Architecture::get_callee_save_registers();
+        auto caller_regs = Architecture::get_caller_save_registers();
+        reg_tester.clear();
+
+        for (auto &reg : calle_regs) {
+            reg_tester[Architecture::to_string(reg)] = true;
+        }
+        for (auto &reg : caller_regs) {
+            reg_tester[Architecture::to_string(reg)] = true;
+        }
+
+        return;
+    }
+
     void spill_all(L2::Function* fn) {
+        initialize_reg_tester();
         char cur_prefix_char = 'A';
         std::string cur_prefix;
         for (auto it : fn->interfence_graph->node_map) {
+            if (reg_tester.find(it.first) != reg_tester.end()) continue;
             cur_prefix.push_back(cur_prefix_char);
-            spill_var = it.second->var;
+            /*if (fn->existing_var_names.find(cur_prefix + std::to_string(cur_var_counter)) != fn->existing_var_names.end()) {
+                cur_prefix.pop_back();
+                cur_prefix_char++;
+                continue;
+            }*/
+            spill_var = new L2::Variable(it.first);
             spill_prefix = cur_prefix;
             fn->accept(&spill_visitor);
             cur_prefix.pop_back();

@@ -112,7 +112,7 @@ namespace L2 {
         if (src_stack != NULL) {
             uint64_t stack_arg_num = src_stack->get()->get();
             L2::Register* rsp_var = new L2::Register("rsp", Architecture::RegisterID::rsp);
-            L2::Number* offset = new L2::Number(stack_arg_offset+stack_arg_num);
+            L2::Number* offset = new L2::Number((stack_arg_offset+stack_arg_num)*8);
             L2::MemoryLocation* mem = new L2::MemoryLocation(rsp_var, offset);
             i->src = mem;
         }
@@ -168,9 +168,9 @@ namespace L2 {
 
     void stack_arg_converter::visit(L2::Function* fn) {
         stack_arg_offset = fn->locals;
-        if (fn->arguments > 6) {
+        /*if (fn->arguments > 6) {
             stack_arg_offset += fn->arguments - 6;
-        }
+        }*/
         for (auto instr : fn->instructions) {
             instr->accept(&stack_arg_er);
         }

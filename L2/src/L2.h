@@ -244,7 +244,9 @@ namespace L2 {
   class fence_node {
     public:
       fence_node(L2::Variable var);
+      fence_node();
       L2::Variable* var;
+      std::string var_str;
       std::unordered_set<L2::Variable, Variable::HashFunction> neighbors;
       uint64_t num_neighbors;
       uint64_t color;
@@ -252,7 +254,7 @@ namespace L2 {
 
   class fence_graph {
     public:
-      std::unordered_map<std::string, L2::fence_node*> node_map;
+      std::unordered_map<std::string, L2::fence_node> node_map;
   };
 
   class Function {
@@ -270,6 +272,9 @@ namespace L2 {
       L2::fence_graph* interfence_graph;
       std::unordered_map<Variable, bool, Variable::HashFunction> was_created;
       std::unordered_map<Variable, bool, Variable::HashFunction> was_spilled;
+      std::unordered_map<std::string, uint64_t> color_map;
+      std::vector<Architecture::RegisterID> sorted_colors;
+      std::unordered_set<std::string> existing_var_names;
   };
 
   class Program {

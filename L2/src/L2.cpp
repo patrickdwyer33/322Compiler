@@ -356,6 +356,12 @@ namespace L2 {
     this->color = 15;
   }
 
+  fence_node::fence_node() 
+  {
+    this->num_neighbors = 0;
+    this->color = 15;
+  }
+
   void Function::to_string() {
     std::cout << "This is a function with name " << this->name << std::endl;
     std::cout << "and num_arguments " << std::to_string(this->arguments) << std::endl;

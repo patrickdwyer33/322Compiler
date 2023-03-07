@@ -584,7 +584,8 @@ namespace Parser {
     template<typename Input>
     static void apply( const Input & in, L2::Program & p) {
       L2::Variable* v = new L2::Variable(in.string());
-      p.singletons.try_emplace(in.string(), *v);
+      L2::Function* currentF = p.functions.back();
+      currentF->existing_var_names.insert(in.string());
       parsed_items.push_back(v);
     }
   };
