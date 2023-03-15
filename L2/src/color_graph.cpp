@@ -98,6 +98,7 @@ namespace L2 {
             L2::fence_node cur_fence_node = sorted_fence_nodes.back();
             if (fn->color_map.find(cur_fence_node.var_str) != fn->color_map.end()) {
                 remove_node(sorted_fence_nodes, fn->interfence_graph->node_map);
+                std::sort(sorted_fence_nodes.begin(), sorted_fence_nodes.end(), fence_cmp);
                 continue;
             }
             std::unordered_map<uint64_t, bool> seen_map;
@@ -119,13 +120,17 @@ namespace L2 {
                     break;
                 }
             }
-            if (fn->color_map.find(cur_fence_node.var_str) == fn->color_map.end()) cant_color = true;
+            if (fn->color_map.find(cur_fence_node.var_str) == fn->color_map.end()) {
+                cant_color = true;
+            }
             remove_node(sorted_fence_nodes, fn->interfence_graph->node_map);
+            std::sort(sorted_fence_nodes.begin(), sorted_fence_nodes.end(), fence_cmp);
         }
         if (cant_color) {
+            cant_color = false;
             fn->interfence_graph->node_map = old_map;
-            std::cout << "be spillin\n";
             L2::spill_all(fn);
+            update_label_map(fn);
             generate_liveness_fn(fn);
             generate_fence_fn(fn);
             color_function(fn);

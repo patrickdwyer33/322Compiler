@@ -108,36 +108,36 @@ namespace L2 {
         else if (found_second) {
             // add first
             L2::fence_node* node = new L2::fence_node(var);
-            map[var.get()] = *node;
             if (node->neighbors.find(var2.get()) == node->neighbors.end()) {
                 node->neighbors.insert(var2);
                 node->num_neighbors += 1;
             }
+            map[var.get()] = *node;
         }
         else if (found_first) {
             // add second
             L2::fence_node* node = new L2::fence_node(var2);
-            map[var2.get()] = *node;
             if (node->neighbors.find(var.get()) == node->neighbors.end()) {
             node->neighbors.insert(var);
             node->num_neighbors += 1;
             }
+            map[var2.get()] = *node;
         }
         else {
             // add first
             L2::fence_node* node = new L2::fence_node(var);
-            map[var.get()] = *node;
             if (node->neighbors.find(var2.get()) == node->neighbors.end()) {
                 node->neighbors.insert(var2);
                 node->num_neighbors += 1;
             }
+            map[var.get()] = *node;
             // add second
             L2::fence_node* node2 = new L2::fence_node(var2);
-            map[var2.get()] = *node2;
             if (node2->neighbors.find(var.get()) == node2->neighbors.end()) {
             node2->neighbors.insert(var);
             node2->num_neighbors += 1;
             }
+            map[var2.get()] = *node2;
         }
         
         

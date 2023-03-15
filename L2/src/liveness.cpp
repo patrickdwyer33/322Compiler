@@ -259,6 +259,18 @@ namespace L2 {
         return;
     }
 
+    void update_label_map(L2::Function* fn) {
+        fn->label_map.clear();
+        for (int i = 0; i < fn->instructions.size(); i++) {
+            auto instr = fn->instructions[0];
+            L2::Instruction_label* label_instr = dynamic_cast<L2::Instruction_label*>(instr);
+            if (label_instr != NULL) {
+                fn->label_map[label_instr->get()->to_string()] = i;
+            }
+        }
+        return;
+    }
+
     void Liveness_Analyzer::visit(L2::Function* fn) {
         initialize_callee_save_vars();
         initialize_caller_save_vars();
@@ -293,11 +305,11 @@ namespace L2 {
                 std::unordered_set<L2::Variable, Variable::HashFunction> new_in = fn->instructions[i]->gen;
                 std::unordered_set<L2::Variable, Variable::HashFunction> new_out;
                 for (auto idx: fn->instructions[i]->succs) {
-                    for (auto &v: fn->ins[idx]) {
+                    for (auto v: fn->ins[idx]) {
                         new_out.insert(v);
                     }
                 }
-                for (auto &v: new_out) {
+                for (auto v: new_out) {
                     if (fn->instructions[i]->kill.find(v) == fn->instructions[i]->kill.end()) {
                         new_in.insert(v);
                     }

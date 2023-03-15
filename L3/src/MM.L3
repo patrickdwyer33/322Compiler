@@ -1,0 +1,111 @@
+define @main() {
+    %m1_num_rows <- call input()
+    %m1_num_cols <- call input()
+    %m1 <- call @getMatrix(%m1_num_rows, %m1_num_cols)
+    %m2_num_rows <- call input()
+    %m2_num_cols <- call input()
+    %m2 <- call @getMatrix(%m2_num_rows, %m2_num_cols)
+    call print(%m1_num_rows)
+    call print(%m2_num_cols)
+    %curRow <- 0
+    :outer
+    %curRow <- %curRow + 1
+    %curRow <- call @encode(%curRow)
+    %outerDone <- %curRow > %m1_num_rows
+    %curRow <- call @decode(%curRow)
+    br %outerDone :end
+    %curCol <- 0
+    :inner
+    %curCol <- %curCol + 1
+    %curCol <- call @encode(%curCol)
+    %innerDone <- %curCol > %m2_num_cols
+    %curCol <- call @decode(%curCol)
+    br %innerDone :outer
+    %curRowCopy <- %curRow
+    %curColCopy <- %curCol
+    %result <- call @multRowbyCol(%m1, %m2, %curRowCopy, %m1_num_rows, %m1_num_cols, %curColCopy, %m2_num_rows, %m2_num_cols)
+    call print(%result)
+    br :inner
+    :end
+    return
+}
+
+define @encode(%val) {
+    %val <- %val << 1
+    %val <- %val + 1
+    return %val
+}
+
+define @decode(%val) {
+    %val <- %val >> 1
+    return %val
+}
+
+define @getMatrix(%numRows, %numCols) {
+    %numRows <- call @decode(%numRows)
+    %numCols <- call @decode(%numCols)
+    %size <- %numRows * %numCols
+    %size <- call @encode(%size)
+    %numRows <- call @encode(%numRows)
+    %numCols <- call @encode(%numCols)
+    %matrix <- call allocate(%size, 1)
+    %curIdx <- 0
+    :loop
+    %curIdx <- %curIdx + 1
+    %curIdx <- call @encode(%curIdx)
+    %noneLeft <- %curIdx > %size
+    %curIdx <- call @decode(%curIdx)
+    br %noneLeft :end
+    %curOffset <- %curIdx * 8
+    %curPointer <- %matrix + %curOffset
+    %curVal <- call input()
+    store %curPointer <- %curVal
+    br :loop
+    :end
+    return %matrix
+}
+
+define @multRowbyCol(%m1, %m2, %rowIdx, %m1_num_rows, %m1_num_cols, %colIdx, %m2_num_rows, %m2_num_cols) {
+    %rowIdxLocal <- %rowIdx - 1
+    %m1_num_cols <- call @decode(%m1_num_cols)
+    %rowIdxLocal <- %rowIdxLocal * %m1_num_cols
+    %m1_num_cols <- call @encode(%m1_num_cols)
+    %rowOffset <- %rowIdxLocal * 8
+    %rowBegin <- 8 + %rowOffset
+    %colIdxLocal <- %colIdx - 1
+    %colOffset <- %colIdxLocal * 8
+    %colBegin <- 8 + %colOffset
+    %output <- 0
+    %rowIdxLocal <- 0
+    %colIdxLocal <- 0
+    :loop
+    %rowIdxLocal <- call @encode(%rowIdxLocal)
+    %colIdxLocal <- call @encode(%colIdxLocal)
+    %rowDone <- %rowIdxLocal >= %m1_num_cols
+    br %rowDone :end
+    %colDone <- %colIdxLocal >= %m2_num_rows
+    br %colDone :end
+    %rowIdxLocal <- call @decode(%rowIdxLocal)
+    %colIdxLocal <- call @decode(%colIdxLocal)
+    %rowOffset <- %rowIdxLocal * 8
+    %rowOffset <- %rowBegin + %rowOffset
+    %curRowLoc <- %m1 + %rowOffset
+    %curRowVal <- load %curRowLoc
+    %m2_num_cols <- call @decode(%m2_num_cols)
+    %colOffset <- %colIdxLocal * %m2_num_cols
+    %m2_num_cols <- call @encode(%m2_num_cols)
+    %colOffset <- %colOffset * 8
+    %colOffset <- %colBegin + %colOffset
+    %curColLoc <- %m2 + %colOffset
+    %curColVal <- load %curColLoc
+    %curColVal <- call @decode(%curColVal)
+    %curRowVal <- call @decode(%curRowVal)
+    %result <- %curColVal * %curRowVal
+    %output <- %output + %result
+    %rowIdxLocal <- %rowIdxLocal + 1
+    %colIdxLocal <- %colIdxLocal + 1
+    br :loop
+    :end
+    %output <- call @encode(%output)
+    return %output
+}

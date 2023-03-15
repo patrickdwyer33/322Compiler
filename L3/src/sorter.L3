@@ -1,0 +1,91 @@
+define @main() {
+    %arrayLength <- call input()
+    %array <- call allocate(%arrayLength, 1)
+    %curIdx <- 0
+    :fillArray
+    %curIdx <- %curIdx + 1
+    %curIdx <- call @encode(%curIdx)
+    %noneLeft <- %curIdx > %arrayLength
+    %curIdx <- call @decode(%curIdx)
+    br %noneLeft :doneInit
+    %curVal <- call input()
+    %curOffset <- %curIdx * 8
+    %curPointer <- %array + %curOffset
+    %test <- load %curPointer
+    store %curPointer <- %curVal
+    br :fillArray
+    :doneInit
+    %maxVal <- call @getMax(%array, %arrayLength)
+    call @printSorted(%array, %arrayLength, %maxVal)
+    return
+}
+
+define @encode(%val) {
+    %val <- %val << 1
+    %val <- %val + 1
+    return %val
+}
+
+define @decode(%val) {
+    %val <- %val >> 1
+    return %val
+}
+
+define @getMax(%array, %arrayLength) {
+    %curIdx <- 0
+    %firstPointer <- %array + 8
+    %curMax <- load %firstPointer
+    :loop
+    %curIdx <- %curIdx + 1
+    %curIdx <- call @encode(%curIdx)
+    %noneLeft <- %curIdx > %arrayLength
+    %curIdx <- call @decode(%curIdx)
+    br %noneLeft :end
+    %curOffset <- %curIdx * 8
+    %curPointer <- %array + %curOffset
+    %curVal <- load %curPointer
+    %curBigger <- %curVal > %curMax
+    br %curBigger :updateMax
+    br :loop
+    :updateMax
+    %curMax <- %curVal
+    br :loop
+    :end
+    return %curMax
+}
+
+define @printSorted(%array, %arrayLength, %maxVal) {
+    %outerIdx <- 0
+    :outer
+    %outerIdx <- %outerIdx + 1
+    %outerIdx <- call @encode(%outerIdx)
+    %noMoreOuter <- %outerIdx > %arrayLength
+    %outerIdx <- call @decode(%outerIdx)
+    br %noMoreOuter :END2
+    %innerIdx <- 0
+    %curMin <- %maxVal
+    %curOffset <- %outerIdx * 8
+    %curMinLoc <- %array + %curOffset
+    :inner
+    %innerIdx <- %innerIdx + 1
+    %innerIdx <- call @encode(%innerIdx)
+    %noMoreInner <- %innerIdx > %arrayLength
+    %innerIdx <- call @decode(%innerIdx)
+    br %noMoreInner :print
+    %curOffset <- %innerIdx * 8
+    %curPointer <- %array + %curOffset
+    %curVal <- load %curPointer
+    %curSmaller <- %curVal < %curMin
+    br %curSmaller :newMin
+    br :inner
+    :newMin
+    %curMin <- %curVal
+    %curMinLoc <- %curPointer
+    br :inner
+    :print
+    call print(%curMin)
+    store %curMinLoc <- %maxVal
+    br :outer
+    :END2
+    return
+}

@@ -1,58 +1,58 @@
-    void spill_printer_visitor::visit(L2::Instruction_return* i) {
+    void colorer::visit(L2::Instruction_return* i) {
 
         return;
     }
-    void spill_printer_visitor::visit(L2::Instruction_assignment* i) {
+    void colorer::visit(L2::Instruction_assignment* i) {
 
         return;
     }
-    void spill_printer_visitor::visit(L2::Instruction_operation* i) {
+    void colorer::visit(L2::Instruction_operation* i) {
     
         return;
     }
-    void spill_printer_visitor::visit(L2::Instruction_save_cmp* i) {
+    void colorer::visit(L2::Instruction_save_cmp* i) {
     
         return;
     }
-    void spill_printer_visitor::visit(L2::Instruction_cjump* i) {
+    void colorer::visit(L2::Instruction_cjump* i) {
 
         return;
     }
-    void spill_printer_visitor::visit(L2::Instruction_label* i) {
+    void colorer::visit(L2::Instruction_label* i) {
 
         return;
     }
-    void spill_printer_visitor::visit(L2::Instruction_goto* i) {
+    void colorer::visit(L2::Instruction_goto* i) {
 
         return;
     }
-    void spill_printer_visitor::visit(L2::Instruction_call* i) {
+    void colorer::visit(L2::Instruction_call* i) {
 
         return;
     }
-    void spill_printer_visitor::visit(L2::Instruction_call_print* i) {
+    void colorer::visit(L2::Instruction_call_print* i) {
 
         return;
     }
-    void spill_printer_visitor::visit(L2::Instruction_call_input* i) {
+    void colorer::visit(L2::Instruction_call_input* i) {
 
         return;
     }
-    void spill_printer_visitor::visit(L2::Instruction_call_allocate* i) {
+    void colorer::visit(L2::Instruction_call_allocate* i) {
 
         return;
     }
-    void spill_printer_visitor::visit(L2::Instruction_call_tensorError* i) {
-
-        return;
-    }
-
-    void spill_printer_visitor::visit(L2::Program* p) {
+    void colorer::visit(L2::Instruction_call_tensorError* i) {
 
         return;
     }
 
-    void spill_printer_visitor::visit(L2::Function* fn) {
+    void colorer::visit(L2::Program* p) {
+
+        return;
+    }
+
+    void colorer::visit(L2::Function* fn) {
 
         return;
     }

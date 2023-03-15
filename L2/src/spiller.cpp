@@ -101,7 +101,7 @@ namespace L2 {
                 i->right = new_var;
             }
         } else {
-            L2::MemoryLocation* right_mem = dynamic_cast<L2::MemoryLocation*>(items[0]);
+            L2::MemoryLocation* right_mem = dynamic_cast<L2::MemoryLocation*>(items[2]);
             if (right_mem != NULL) {
                 right_var = static_cast<L2::Variable*>(right_mem->get()[0]);
                 if (*spill_var == *right_var) {
@@ -324,6 +324,7 @@ namespace L2 {
                 cur_prefix.push_back(cur_prefix_char);
             }
         }
+        delete(fn->interfence_graph);
         return;
     }
 
