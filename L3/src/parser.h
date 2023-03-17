@@ -2,6 +2,6 @@
 
 #include <L3.h>
 
-namespace Parser{
+namespace Parser {
   L3::Program parse_file (char *fileName);
 }

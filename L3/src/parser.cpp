@@ -152,16 +152,19 @@ namespace Parser {
       t
     >{};
 
+  struct arg_var_barrier:
+    pegtl::one<'('> {};
+
   struct no_args:
     pegtl::seq<
-      pegtl::one<'('>,
+      arg_var_barrier,
       seps,
       pegtl::one<')'>
     > {};
 
   struct one_arg:
     pegtl::seq<
-      pegtl::one<'('>,
+      arg_var_barrier,
       seps,
       t,
       seps,
@@ -170,7 +173,7 @@ namespace Parser {
 
   struct many_args:
     pegtl::seq<
-      pegtl::one<'('>,
+      arg_var_barrier,
       seps,
       t,
       pegtl::star<
@@ -194,14 +197,14 @@ namespace Parser {
 
   struct no_vars:
     pegtl::seq<
-      pegtl::one<'('>,
+      arg_var_barrier,
       seps,
       pegtl::one<')'>
     > {};
 
   struct one_var:
     pegtl::seq<
-      pegtl::one<'('>,
+      arg_var_barrier,
       seps,
       var,
       seps,
@@ -210,7 +213,7 @@ namespace Parser {
 
   struct many_vars:
     pegtl::seq<
-      pegtl::one<'('>,
+      arg_var_barrier,
       seps,
       var,
       pegtl::star<
@@ -238,28 +241,34 @@ namespace Parser {
       TAOCPP_PEGTL_STRING("print"),
       TAOCPP_PEGTL_STRING("allocate"),
       TAOCPP_PEGTL_STRING("input"),
-      TAOCPP_PEGTL_STRING("tensor-error"),
+      TAOCPP_PEGTL_STRING("tensor-error")
     > {};
 
   struct Instruction_label:
     label {};
+
+  struct return_val:
+    t {};
 
   struct Instruction_return : 
     pegtl::sor<
       pegtl::seq<
         TAOCPP_PEGTL_STRING("return"),
         seps,
-        t
+        return_val
       >,
       TAOCPP_PEGTL_STRING("return")
     > {};
+
+  struct branch_val:
+    t {};
 
   struct Instruction_branch:
     pegtl::sor<
       pegtl::seq<
         TAOCPP_PEGTL_STRING("br"),
         seps,
-        t,
+        branch_val,
         seps,
         label
       >,
@@ -288,15 +297,23 @@ namespace Parser {
       args
     > {};
 
+  ////// MAKE SURE THAT WEIRD COLORING HERE IS JUST A FORMATTING ISSUE
+
+  struct store_item:
+    TAOCPP_PEGTL_STRING("store") {};
+
   struct left_hand:
     pegtl::sor<
       pegtl::seq<
-        TAOCPP_PEGTL_STRING("store"),
+        store_item,
         seps,
-        var,
+        var
       >,
       var
     > {};
+
+  struct load_item:
+    TAOCPP_PEGTL_STRING("load") {};
 
   struct right_hand:
     pegtl::sor<
@@ -316,7 +333,7 @@ namespace Parser {
         t
       >,
       pegtl::seq<
-        TAOCPP_PEGTL_STRING("load"),
+        load_item,
         seps,
         var
       >,
@@ -329,12 +346,15 @@ namespace Parser {
       pegtl::one<'-'>
     >{};
 
+  struct arrow:
+    str_arrow {};
+
 
   struct Instruction_assignment:
     pegtl::seq<
       left_hand,
       seps,
-      str_arrow,
+      arrow,
       seps,
       right_hand
     >{};
@@ -405,332 +425,293 @@ namespace Parser {
   template<typename Rule>
   struct action : pegtl::nothing<Rule> {};
 
+  template<> struct action <var> {
+    template<typename Input>
+	  static void apply(const Input & in, L3::Program & p) {
+      //Function* curF = p.functions.back();
+      L3::Variable* var = new L3::Variable(in.string());
+      parsed_items.push_back(var);
+    }
+  };
+
+  template<> struct action <label> {
+    template<typename Input>
+	  static void apply(const Input & in, L3::Program & p) {
+      L3::Label* var = new L3::Label(in.string());
+      parsed_items.push_back(var);
+    }
+  };
+
+  template<> struct action <fn_name> {
+    template<typename Input>
+	  static void apply(const Input & in, L3::Program & p) {
+      L3::Fn_Name_Item* fn_name = new L3::Fn_Name_Item(in.string().substr(1));
+      parsed_items.push_back(fn_name);
+    }
+  };
+
+  template<> struct action <Number> {
+    template<typename Input>
+	  static void apply(const Input & in, L3::Program & p) {
+      L3::Number* n = new L3::Number(std::stoll(in.string()));
+      parsed_items.push_back(n);
+    }
+  };
+
+  template<> struct action <cmp> {
+    template<typename Input>
+	  static void apply(const Input & in, L3::Program & p) {
+      L3::CmpOP* op = new L3::CmpOP(in.string());
+      parsed_items.push_back(op);
+    }
+  };
+
+  template<> struct action <op> {
+    template<typename Input>
+	  static void apply(const Input & in, L3::Program & p) {
+      L3::OP* op = new L3::OP(in.string());
+      parsed_items.push_back(op);
+    }
+  };
+
+  template<> struct action <arg_var_barrier> {
+    template<typename Input>
+	  static void apply(const Input & in, L3::Program & p) {
+      L3::Barrier* bar = new L3::Barrier();
+      parsed_items.push_back(bar);
+    }
+  };
+
   template<> struct action <fn_declaration> {
     template<typename Input>
-	  static void apply(const Input & in, L1::Program & p) {
-      L1::Function* newF = new L1::Function();
+	  static void apply(const Input & in, L3::Program & p) {
+      L3::Function* newF = new L3::Function();
       // store num args last when vars fires
-      Item* num_args_item = parsed_items.back();
+      L3::Item* last = parsed_items.back();
       parsed_items.pop_back();
-      Number* num_args_num_item = static_cast<Number*>(num_args_item);
-      newF->num_args = num_args_num_item->val;
-      // make sure the order vals are pushed here is reversed either here or in
-      // the vars action
-      for (uint64_t i = 0; i < num_args_num_item->val; i++) {
-        Item* var = parsed_items.back();
+      L3::Barrier* bar = dynamic_cast<L3::Barrier*>(last);
+      uint64_t num_vars = 0;
+      std::vector<L3::Item*> vars_rev;
+      while (bar == NULL) {
+        num_vars++;
         parsed_items.pop_back();
-        newF->vars.push_back(var);
+        vars_rev.push_back(last);
+        last = parsed_items.back();
+        bar = dynamic_cast<L3::Barrier*>(last);
       }
-      Item* fn_name = parsed_items.back();
+      // reverse em
+      while (!vars_rev.empty()) {
+        L3::Item* asdf = vars_rev.back();
+        vars_rev.pop_back();
+        newF->vars.push_back(asdf);
+      }
+      L3::Item* fn_name = parsed_items.back();
       parsed_items.pop_back();
       newF->name = fn_name->s;
       p.functions.push_back(newF);
     }
   };
 
-  // action for vars
-  // make sure to reverse order, and push back the number of vars
-
-  // actions for instruction_call and instruction_call_item
-  // don't construct instruction_call in instruction_call_item, just push back
-  // the relevant information so instruction_assignment can use it
-  // for instruction_assignment, will need to push back contextual information
-  // need to push back a context item that we can switch on
-  // or, need to seperate instruction_assignment into multiple structs and 
-  // respective actions, not sure which way is easier.
-  // start out with smaller things so we can know which one is easier before
-  // we decide
-  // FOLLOW THE ORDER OF THE STRUCTS
-
-  template<> struct action <Number> {
+  template<> struct action <return_val> {
     template<typename Input>
-	  static void apply(const Input & in, L1::Program & p) {
-      L1::Function* currentF = p.functions.back();
-
-      L1::Number* n = new L1::Number(std::stoll(in.string()));
-
-      parsed_items.push_back(n);
-    }
-  };
-
-  template<> struct action <Label> {
-    template<typename Input>
-    static void apply(const Input & in, L1::Program & p) {
-      L1::Label* l = new L1::Label(in.string());
-      parsed_items.push_back(l);
-    }
-  };
-
-  template<> struct action <Register> {
-    template< typename Input >
-    static void apply( const Input & in, L1::Program & p) {
-      std::string s = in.string();
-      Architecture::RegisterID reg_id = Architecture::reg_from_string(s);
-      L1::Register* r = new L1::Register(reg_id);
-      parsed_items.push_back(r);
-    }
-  };
-
-  template<> struct action <MemoryLocation> {
-    template<typename Input>
-    static void apply(const Input & in, L1::Program & p) {
-      auto n = parsed_items.back();
-      L1::Number* real_n = (L1::Number*)n;
+	  static void apply(const Input & in, L3::Program & p) {
+      L3::Item* val = parsed_items.back();
       parsed_items.pop_back();
-      auto r = parsed_items.back();
-      L1::Register* real_r = (L1::Register*)r;
-      parsed_items.pop_back();
-      L1::MemoryLocation* mem = new L1::MemoryLocation(real_r, real_n);
-      parsed_items.push_back(mem);
-    }
-  };
-
-  template<> struct action <operation> {
-    template<typename Input>
-    static void apply(const Input & in, L1::Program & p) {
-      Architecture::OP opID = Architecture::OP_from_string(in.string());
-      L1::Operation* op = new L1::Operation(opID);
-      parsed_items.push_back(op);
-    }
-  };
-
-  template<> struct action <cmp> {
-    template<typename Input>
-    static void apply(const Input & in, L1::Program & p) {
-      Architecture::CompareOP cmpOPID = Architecture::cmpOP_from_string(in.string());
-      L1::CmpOperation* cmpOP = new L1::CmpOperation(cmpOPID);
-      parsed_items.push_back(cmpOP);
+      L3::Return_val* ret_val = new L3::Return_val(val);
+      parsed_items.push_back(ret_val);
     }
   };
 
   template<> struct action <Instruction_return> {
     template<typename Input>
-	  static void apply(const Input & in, L1::Program & p) {
-      L1::Function* currentF = p.functions.back();
-      int64_t num_locals = currentF->locals;
-      int64_t num_args = currentF->arguments;
-      L1::Number* num_locals_item = new L1::Number(num_locals);
-      L1::Number* num_args_item = new L1::Number(num_args);
-      L1::Instruction_return* i = new L1::Instruction_return(num_locals_item, num_args_item);
-      currentF->instructions.push_back(i);
-    }
-  };
-
-  template<> struct action <Instruction_assignment> {
-    template<typename Input>
-	  static void apply(const Input & in, L1::Program & p) {
-      L1::Function* currentF = p.functions.back();
-
-      auto src = parsed_items.back();
-      parsed_items.pop_back();
-      auto dst = parsed_items.back();
-      parsed_items.pop_back();
-
-      L1::Instruction_assignment* i = new L1::Instruction_assignment(dst, src);
-
-      currentF->instructions.push_back(i);
-    }
-  };
-
-  // operation with 1 item
-  template<> struct action <Instruction_operation1> {
-    template<typename Input>
-	  static void apply(const Input & in, L1::Program & p) {
-      L1::Function* currentF = p.functions.back();
-
-      auto op = parsed_items.back();
-      parsed_items.pop_back();
-      auto reg = parsed_items.back();
-      parsed_items.pop_back();
-
-      L1::NullItem* emptyThing = new L1::NullItem();
-      L1::NullItem* emptyThing2 = new L1::NullItem();
-      L1::NullItem* emptyThing3 = new L1::NullItem();
-      auto test_name = typeid(*emptyThing).name();
-      std::cout << test_name << std::endl;
-
-      L1::Instruction_operation* i = new L1::Instruction_operation(reg, op, emptyThing, emptyThing2, emptyThing3);
-
-      currentF->instructions.push_back(i);
-    }
-  };
-
-  // operation with 2 items
-  template<> struct action <Instruction_operation2> {
-    template<typename Input>
-	  static void apply(const Input & in, L1::Program & p) {
-      L1::Function* currentF = p.functions.back();
-
-      auto right = parsed_items.back();
-      parsed_items.pop_back();
-      auto op = parsed_items.back();
-      parsed_items.pop_back();
-      auto left = parsed_items.back();
-      parsed_items.pop_back();
-
-      L1::NullItem* emptyThing = new L1::NullItem();
-      L1::NullItem* emptyThing2 = new L1::NullItem();
-
-      L1::Instruction_operation* i = new L1::Instruction_operation(left, op, right, emptyThing, emptyThing2);
-
-      currentF->instructions.push_back(i);
-    }
-  };
-
-  // lea (3-ish items)
-  template<> struct action <Instruction_operation3> {
-    template<typename Input>
-	  static void apply(const Input & in, L1::Program & p) {
-      L1::Function* currentF = p.functions.back();
-
-      auto factor = parsed_items.back();
-      parsed_items.pop_back();
-      auto second = parsed_items.back();
-      parsed_items.pop_back();
-      auto first = parsed_items.back();
-      parsed_items.pop_back();
-      auto op = parsed_items.back();
-      parsed_items.pop_back();
-      auto dst = parsed_items.back();
-      parsed_items.pop_back();
-
-      L1::Instruction_operation* i = new L1::Instruction_operation(dst, op, first, second, factor);
-
-      currentF->instructions.push_back(i);
-    }
-  };
-
-  template<> struct action <Instruction_cjump> {
-    template<typename Input>
-    static void apply(const Input & in, L1::Program & p){
-      L1::Function* currentF = p.functions.back();
-
-      auto label = parsed_items.back();
-      parsed_items.pop_back();
-      auto right = parsed_items.back();
-      parsed_items.pop_back();
-      auto cmpOP = parsed_items.back();
-      parsed_items.pop_back();
-      auto left = parsed_items.back();
-      parsed_items.pop_back();
-
-      L1::Instruction_cjump* i = new L1::Instruction_cjump(left, cmpOP, right, label);
-
-      currentF->instructions.push_back(i);
-    }
-  };
-
-  template<> struct action <Instruction_save_cmp> {
-    template<typename Input>
-    static void apply(const Input & in, L1::Program & p){
-      L1::Function* currentF = p.functions.back();
-
-      auto right = parsed_items.back();
-      parsed_items.pop_back();
-      auto cmpOP = parsed_items.back();
-      parsed_items.pop_back();
-      auto left = parsed_items.back();
-      parsed_items.pop_back();
-      auto dst = parsed_items.back();
-      parsed_items.pop_back();
-
-      L1::Instruction_save_cmp* i = new L1::Instruction_save_cmp(dst, left, cmpOP, right);
-
-      currentF->instructions.push_back(i);
+	  static void apply(const Input & in, L3::Program & p) {
+      L3::Function* curF = p.functions.back();
+      if (parsed_items.empty()) {
+        L3::Instruction_return* instr = new L3::Instruction_return();
+        curF->instructions.push_back(instr);
+        return;
+      }
+      L3::Item* back = parsed_items.back();
+      L3::Return_val* ret = dynamic_cast<L3::Return_val*>(back);
+      if (ret != NULL) {
+        parsed_items.pop_back();
+        L3::Instruction_return* instr = new L3::Instruction_return(ret->val);
+        curF->instructions.push_back(instr);
+        return;
+      }
+      L3::Instruction_return* instr = new L3::Instruction_return();
+      curF->instructions.push_back(instr);
     }
   };
 
   template<> struct action <Instruction_label> {
     template<typename Input>
-    static void apply(const Input & in, L1::Program & p){
-      L1::Function* currentF = p.functions.back();
-
-      L1::Label* label = new L1::Label(in.string());
-
-      L1::Instruction_label* i = new L1::Instruction_label(label);
-
-      currentF->instructions.push_back(i);
+	  static void apply(const Input & in, L3::Program & p) {
+      L3::Item* label = parsed_items.back();
+      parsed_items.pop_back();
+      L3::Function* curF = p.functions.back();
+      L3::Label* label_item = static_cast<L3::Label*>(label);
+      label_item->s = label_item->s + "_" + curF->name;
+      L3::Instruction_label* instr = new L3::Instruction_label(label_item);
+      curF->instructions.push_back(instr);
     }
   };
 
-  template<> struct action <Instruction_goto> {
+  template<> struct action <branch_val> {
     template<typename Input>
-    static void apply(const Input & in, L1::Program & p){
-      L1::Function* currentF = p.functions.back();
-
-      auto label = parsed_items.back();
+	  static void apply(const Input & in, L3::Program & p) {
+      L3::Item* val = parsed_items.back();
       parsed_items.pop_back();
+      L3::Branch_val* br_val = new L3::Branch_val(val);
+      parsed_items.push_back(br_val);
+    }
+  };
 
-      L1::Instruction_goto* i = new L1::Instruction_goto(label);
-
-      currentF->instructions.push_back(i);
+  template<> struct action <Instruction_branch> {
+    template<typename Input>
+	  static void apply(const Input & in, L3::Program & p) {
+      L3::Function* curF = p.functions.back();
+      L3::Item* label = parsed_items.back();
+      parsed_items.pop_back();
+      if (parsed_items.empty()) {
+        L3::Instruction_branch* instr = new L3::Instruction_branch(label);
+        curF->instructions.push_back(instr);
+        return;
+      }
+      L3::Item* back = parsed_items.back();
+      L3::Branch_val* br = dynamic_cast<L3::Branch_val*>(back);
+      if (br != NULL) {
+        parsed_items.pop_back();
+        L3::Instruction_branch* instr = new L3::Instruction_branch(label, br->val);
+        curF->instructions.push_back(instr);
+      }
+      L3::Instruction_branch* instr = new L3::Instruction_branch(label);
+      curF->instructions.push_back(instr);
     }
   };
 
   template<> struct action <Instruction_call> {
     template<typename Input>
-	  static void apply(const Input & in, L1::Program & p){
-      L1::Function* currentF = p.functions.back();
-
-      auto num_args = parsed_items.back();
+	  static void apply(const Input & in, L3::Program & p) {
+      L3::Function* curF = p.functions.back();
+      L3::Item* last = parsed_items.back();
       parsed_items.pop_back();
-      auto fn = parsed_items.back();
+      L3::Barrier* bar = dynamic_cast<L3::Barrier*>(last);
+      uint64_t num_args = 0;
+      std::vector<L3::Item*> args_rev;
+      while (bar == NULL) {
+        num_args++;
+        parsed_items.pop_back();
+        args_rev.push_back(last);
+        last = parsed_items.back();
+        bar = dynamic_cast<L3::Barrier*>(last);
+      }
+      // reverse em
+      std::vector<L3::Item*> args;
+      while (!args_rev.empty()) {
+        L3::Item* asdf = args_rev.back();
+        args_rev.pop_back();
+        args.push_back(asdf);
+      }
+      L3::Instruction_call* instr = new L3::Instruction_call(num_args, args);
+      curF->instructions.push_back(instr);
+    }
+  };
+
+  template<> struct action <Instruction_call_item> {
+    template<typename Input>
+	  static void apply(const Input & in, L3::Program & p) {
+      L3::Item* last = parsed_items.back();
       parsed_items.pop_back();
-
-      L1::Instruction_call* i = new L1::Instruction_call(fn, num_args);
-
-      currentF->instructions.push_back(i);
+      L3::Barrier* bar = dynamic_cast<L3::Barrier*>(last);
+      uint64_t num_args = 0;
+      std::vector<L3::Item*> args_rev;
+      while (bar == NULL) {
+        num_args++;
+        parsed_items.pop_back();
+        args_rev.push_back(last);
+        last = parsed_items.back();
+        bar = dynamic_cast<L3::Barrier*>(last);
+      }
+      // reverse em
+      std::vector<L3::Item*> args;
+      while (!args_rev.empty()) {
+        L3::Item* asdf = args_rev.back();
+        args_rev.pop_back();
+        args.push_back(asdf);
+      }
+      L3::Call_item* call = new L3::Call_item(num_args, args);
+      parsed_items.push_back(call);
     }
   };
 
-  template<> struct action <Instruction_call_print> {
+  template<> struct action <store_item> {
     template<typename Input>
-	  static void apply(const Input & in, L1::Program & p){
-      L1::Function* currentF = p.functions.back();
-
-      L1::Instruction_call_print* i = new L1::Instruction_call_print();
-
-      currentF->instructions.push_back(i);
-    }
-  };
-
-  template<> struct action <Instruction_call_input> {
-    template<typename Input>
-	  static void apply(const Input & in, L1::Program & p){
-      L1::Function* currentF = p.functions.back();
-
-      L1::Instruction_call_input* i = new L1::Instruction_call_input();
-
-      currentF->instructions.push_back(i);
-    }
-  };
-
-  template<> struct action <Instruction_call_allocate> {
-    template< typename Input >
-	  static void apply( const Input & in, L1::Program & p){
-      L1::Function* currentF = p.functions.back();
-
-      L1::Instruction_call_allocate* i = new L1::Instruction_call_allocate();
-
-      currentF->instructions.push_back(i);
-    }
-  };
-
-  template<> struct action <Instruction_call_tensorError> {
-    template<typename Input>
-	  static void apply(const Input & in, L1::Program & p){
-      L1::Function* currentF = p.functions.back();
-
-      auto arg = parsed_items.back();
+	  static void apply(const Input & in, L3::Program & p) {
+      L3::Store* store_item = new L3::Store();
       parsed_items.pop_back();
-
-      L1::Instruction_call_tensorError* i = new L1::Instruction_call_tensorError(arg);
-
-      currentF->instructions.push_back(i);
     }
   };
 
-  L1::Program parse_file (char *fileName){
+  template<> struct action <load_item> {
+    template<typename Input>
+	  static void apply(const Input & in, L3::Program & p) {
+      L3::Load* load_item = new L3::Load();
+      parsed_items.pop_back();
+    }
+  };
+
+  template<> struct action <arrow> {
+    template<typename Input>
+	  static void apply(const Input & in, L3::Program & p) {
+      L3::Arrow* arrow = new L3::Arrow();
+      parsed_items.pop_back();
+    }
+  };
+
+  template<> struct action <Instruction_assignment> {
+    template<typename Input>
+	  static void apply(const Input & in, L3::Program & p) {
+      L3::Function* curF = p.functions.back();
+      L3::Item* cur = parsed_items.back();
+      L3::Arrow* arrow = dynamic_cast<L3::Arrow*>(cur);
+      bool is_store;
+      bool is_load;
+      L3::Instruction_call* call_instr;
+      std::vector<L3::Item*> right_stuff;
+      while (arrow == NULL) {
+        parsed_items.pop_back();
+        L3::Call_item* call = dynamic_cast<L3::Call_item*>(cur);
+        if (call != NULL) {
+          call_instr = new L3::Instruction_call(call->num_args, call->args);
+          continue;
+        }
+        L3::Store* store = dynamic_cast<L3::Store*>(cur);
+        if (store != NULL) {
+          is_store = true;
+          continue;
+        }
+        L3::Load* load = dynamic_cast<L3::Load*>(cur);
+        if (load != NULL) {
+          is_load = true;
+          continue;
+        }
+        right_stuff.push_back(cur);
+        cur = parsed_items.back();
+        arrow = dynamic_cast<L3::Arrow*>(cur);
+      }
+      parsed_items.pop_back();
+      L3::Item* left = parsed_items.back();
+      parsed_items.pop_back();
+      L3::Instruction_assignment* instr = new L3::Instruction_assignment(left, right_stuff);
+      instr->is_store = is_store;
+      instr->is_load = is_load;
+      instr->call_instr = call_instr;
+      curF->instructions.push_back(instr);
+    }
+  };
+
+  L3::Program parse_file (char *fileName){
 
     /* 
      * Check the grammar for some possible issues.
@@ -741,7 +722,7 @@ namespace Parser {
      * Parse.
      */
     pegtl::file_input< > fileInput(fileName);
-    L1::Program p;
+    L3::Program p;
     pegtl::parse<grammar, action>(fileInput, p);
 
     return p;

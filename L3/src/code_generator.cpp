@@ -8,7 +8,7 @@ namespace L3 {
 
     Code_Generator_Visitor code_gen_vis;
 
-    std::vector<std::string>> arg_regs;
+    std::vector<std::string> arg_regs;
 
     // make sure this is the right order
     void instatiate_arg_regs() {
@@ -39,14 +39,14 @@ namespace L3 {
     void Code_Generator_Visitor::visit(Instruction_call* i) {
         outputFile << "mem rsp -8 <- :" << i->fn_name << "_ret\n";
         if (i->num_args > 6) {
-            for (int i = 7; i <= i->num_args; i++) {
-                int offset = i - 6;
-                outputFile << "mem rsp -" << std::to_string(offset) << " <- " i->args[i-1]->s << "\n";
+            for (int idx = 7; idx <= i->num_args; idx++) {
+                int offset = idx - 6;
+                outputFile << "mem rsp -" << std::to_string(offset) << " <- " + i->args[idx-1]->s << "\n";
             }
         }
-        for (int i = 0; i < 6; i++) {
-            std::string cur_reg = arg_regs[i];
-            outputFile << cur_reg << " <- " i->args[i]->s << "\n";
+        for (int idx = 0; idx < 6; idx++) {
+            std::string cur_reg = arg_regs[idx];
+            outputFile << cur_reg << " <- " << i->args[idx]->s << "\n";
         }
         outputFile << "call @" << i->fn_name << std::to_string(i->num_args) << "\n";
         outputFile << i->fn_name << "_ret\n";
@@ -58,19 +58,19 @@ namespace L3 {
             outputFile << i->s << "\n";
             return;
         }
-        call_instr->accept(&code_gen_vis);
+        i->call_instr->accept(&code_gen_vis);
         outputFile << "rax <- " << i->left->s << "\n";
         return;
     }
     void Code_Generator_Visitor::visit(Function* fn) {
         outputFile << "(@" << fn->name << "\n" << std::to_string(fn->num_args) << "\n";
-        for (uint64_t i = fn->num_args; i > 0; --i) {
-            std::string cur_reg = arg_regs[i-1];
-            outputFile << vars[i-1]->s << " <- " << cur_reg << "\n";
+        for (uint64_t idx = fn->num_args; idx > 0; --idx) {
+            std::string cur_reg = arg_regs[idx-1];
+            outputFile << fn->vars[idx-1]->s << " <- " << cur_reg << "\n";
         }
         for (auto instr : fn->instructions) {
             if (instr->is_L2) {
-                outputFile << instr.s << "\n";
+                outputFile << instr->s << "\n";
             }
             else {
                 instr->accept(&code_gen_vis);

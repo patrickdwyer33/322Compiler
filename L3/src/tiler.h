@@ -3,7 +3,9 @@
 
 namespace L3 {
 
-    class Tiler_Visitor : L3::Visitor {
+    void Generate_Tiles(Program &p);
+
+    class Tiler_Visitor : public L3::Visitor {
         void visit(Instruction_return* i);
         void visit(Instruction_label* i);
         void visit(Instruction_branch* i);

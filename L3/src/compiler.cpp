@@ -15,6 +15,10 @@
 #include <assert.h>
 
 #include <parser.h>
+#include <L3.h>
+#include <tiler.h>
+#include <tree_gen.h>
+#include <code_generator.h>
 
 void print_help (char *progName){
   std::cerr << "Usage: " << progName << " [-v] [-g 0|1] [-O 0|1|2] [-s] [-l] [-i] SOURCE" << std::endl;
