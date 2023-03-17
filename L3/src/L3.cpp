@@ -45,9 +45,10 @@ namespace L3 {
         this->val = val;
     }
 
-    Call_item::Call_item(uint64_t num_args, std::vector<Item*> args) {
+    Call_item::Call_item(uint64_t num_args, std::vector<Item*> args, std::string fn_name) {
         this->num_args = num_args;
         this->args = args;
+        this->fn_name = fn_name;
     }
 
     Store::Store() {}
@@ -256,11 +257,13 @@ namespace L3 {
 
     Instruction_return::Instruction_return() {
         this->returns_val = false;
+        this->is_L2 = false;
     }
 
     Instruction_return::Instruction_return(Item* ret_val) {
         this->returns_val = true;
         this->return_val = ret_val;
+        this->is_L2 = false;
     }
 
     void Instruction_return::accept(Visitor* v) {
@@ -272,16 +275,19 @@ namespace L3 {
         v->visit(this);
     }
 
-    Instruction_branch::Instruction_branch(Item* label) : has_val(false) {}
+    Instruction_branch::Instruction_branch(Item* label) : has_val(false) {this->is_L2 = false;}
     Instruction_branch::Instruction_branch(Item* label, Item* val) : has_val(true) {
         this->label = label;
+        this->is_L2 = false;
     }
     void Instruction_branch::accept(Visitor* v) {
         v->visit(this);
     }
 
 
-    Instruction_call::Instruction_call(uint64_t num_args, std::vector<Item*> args) : num_args(num_args), args(args) {}
+    Instruction_call::Instruction_call(uint64_t num_args, std::vector<Item*> args, std::string fn_name) : num_args(num_args), args(args) 
+    {this->is_L2 = false;
+    this->fn_name = fn_name;}
     void Instruction_call::accept(Visitor* v) {
         v->visit(this);
     }
@@ -290,6 +296,7 @@ namespace L3 {
     Instruction_assignment::Instruction_assignment(Item* left, std::vector<Item*> right) :
         is_store(false), is_load(false), is_call_store(false), left(left), right(right) {
         call_instr = NULL;
+        this->is_L2 = false;
     }
     void Instruction_assignment::accept(Visitor* v) {
         v->visit(this);

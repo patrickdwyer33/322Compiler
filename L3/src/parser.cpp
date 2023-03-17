@@ -153,7 +153,7 @@ namespace Parser {
     >{};
 
   struct arg_var_barrier:
-    pegtl::one<'('> {};
+    pegtl::seq<pegtl::one<'('>> {};
 
   struct no_args:
     pegtl::seq<
@@ -176,7 +176,7 @@ namespace Parser {
       arg_var_barrier,
       seps,
       t,
-      pegtl::star<
+      pegtl::plus<
         pegtl::seq<
           seps,
           pegtl::one<','>,
@@ -190,9 +190,9 @@ namespace Parser {
 
   struct args:
     pegtl::sor<
-      many_args,
-      one_arg,
-      no_args
+      pegtl::seq<pegtl::at<many_args>, many_args>,
+      pegtl::seq<pegtl::at<one_arg>, one_arg>,
+      pegtl::seq<pegtl::at<no_args>, no_args>
     > {};
 
   struct no_vars:
@@ -216,7 +216,7 @@ namespace Parser {
       arg_var_barrier,
       seps,
       var,
-      pegtl::star<
+      pegtl::plus<
         pegtl::seq<
           seps,
           pegtl::one<','>,
@@ -230,9 +230,9 @@ namespace Parser {
 
   struct vars:
     pegtl::sor<
-      many_vars,
-      one_var,
-      no_vars
+      pegtl::seq<pegtl::at<many_vars>, many_vars>,
+      pegtl::seq<pegtl::at<one_var>, one_var>,
+      pegtl::seq<pegtl::at<no_vars>, no_vars>
     > {};
 
   struct callee:
@@ -245,10 +245,10 @@ namespace Parser {
     > {};
 
   struct Instruction_label:
-    label {};
+    pegtl::seq<label> {};
 
   struct return_val:
-    t {};
+    pegtl::seq<t> {};
 
   struct Instruction_return : 
     pegtl::sor<
@@ -261,7 +261,7 @@ namespace Parser {
     > {};
 
   struct branch_val:
-    t {};
+    pegtl::seq<t> {};
 
   struct Instruction_branch:
     pegtl::sor<
@@ -396,7 +396,7 @@ namespace Parser {
       Instructions_rule,
       seps,
       pegtl::one<'}'>
-    >{};
+    > {};
 
   struct Functions_rule:
     pegtl::plus<
@@ -408,7 +408,7 @@ namespace Parser {
   struct entry_point_rule:
     pegtl::seq<
       Functions_rule
-    > { };
+    > {};
 
   struct grammar : 
     pegtl::must< 
@@ -488,7 +488,6 @@ namespace Parser {
       L3::Function* newF = new L3::Function();
       // store num args last when vars fires
       L3::Item* last = parsed_items.back();
-      parsed_items.pop_back();
       L3::Barrier* bar = dynamic_cast<L3::Barrier*>(last);
       uint64_t num_vars = 0;
       std::vector<L3::Item*> vars_rev;
@@ -499,6 +498,7 @@ namespace Parser {
         last = parsed_items.back();
         bar = dynamic_cast<L3::Barrier*>(last);
       }
+      parsed_items.pop_back();
       // reverse em
       while (!vars_rev.empty()) {
         L3::Item* asdf = vars_rev.back();
@@ -594,8 +594,13 @@ namespace Parser {
     template<typename Input>
 	  static void apply(const Input & in, L3::Program & p) {
       L3::Function* curF = p.functions.back();
+      if (parsed_items.empty()) {
+        std::vector<L3::Item*> args = {};
+        L3::Instruction_call* instr = new L3::Instruction_call(0, args, "print");
+        curF->instructions.push_back(instr);
+        return;
+      }
       L3::Item* last = parsed_items.back();
-      parsed_items.pop_back();
       L3::Barrier* bar = dynamic_cast<L3::Barrier*>(last);
       uint64_t num_args = 0;
       std::vector<L3::Item*> args_rev;
@@ -606,6 +611,7 @@ namespace Parser {
         last = parsed_items.back();
         bar = dynamic_cast<L3::Barrier*>(last);
       }
+      parsed_items.pop_back();
       // reverse em
       std::vector<L3::Item*> args;
       while (!args_rev.empty()) {
@@ -613,7 +619,7 @@ namespace Parser {
         args_rev.pop_back();
         args.push_back(asdf);
       }
-      L3::Instruction_call* instr = new L3::Instruction_call(num_args, args);
+      L3::Instruction_call* instr = new L3::Instruction_call(num_args, args, "print");
       curF->instructions.push_back(instr);
     }
   };
@@ -621,6 +627,12 @@ namespace Parser {
   template<> struct action <Instruction_call_item> {
     template<typename Input>
 	  static void apply(const Input & in, L3::Program & p) {
+      if (parsed_items.empty()) {
+        std::vector<L3::Item*> args = {};
+        L3::Call_item* call_item = new L3::Call_item(0, args, "print");
+        parsed_items.push_back(call_item);
+        return;
+      }
       L3::Item* last = parsed_items.back();
       parsed_items.pop_back();
       L3::Barrier* bar = dynamic_cast<L3::Barrier*>(last);
@@ -633,6 +645,7 @@ namespace Parser {
         last = parsed_items.back();
         bar = dynamic_cast<L3::Barrier*>(last);
       }
+      parsed_items.pop_back();
       // reverse em
       std::vector<L3::Item*> args;
       while (!args_rev.empty()) {
@@ -640,7 +653,7 @@ namespace Parser {
         args_rev.pop_back();
         args.push_back(asdf);
       }
-      L3::Call_item* call = new L3::Call_item(num_args, args);
+      L3::Call_item* call = new L3::Call_item(num_args, args, "print");
       parsed_items.push_back(call);
     }
   };
@@ -683,7 +696,7 @@ namespace Parser {
         parsed_items.pop_back();
         L3::Call_item* call = dynamic_cast<L3::Call_item*>(cur);
         if (call != NULL) {
-          call_instr = new L3::Instruction_call(call->num_args, call->args);
+          call_instr = new L3::Instruction_call(call->num_args, call->args, "print");
           continue;
         }
         L3::Store* store = dynamic_cast<L3::Store*>(cur);

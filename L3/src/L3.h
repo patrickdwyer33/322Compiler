@@ -9,7 +9,7 @@ namespace L3 {
 
     class Item {
         public:
-            virtual ~A() = default;
+            virtual ~Item() = default;
             std::string s;
     };
 
@@ -60,9 +60,10 @@ namespace L3 {
 
     class Call_item : public Item {
         public:
-            Call_item(uint64_t num_args, std::vector<Item*> args);
+            Call_item(uint64_t num_args, std::vector<Item*> args, std::string fn_name);
             uint64_t num_args;
             std::vector<Item*> args;
+            std::string fn_name;
     };
 
     class Store : public Item {
@@ -199,7 +200,7 @@ namespace L3 {
 
     class Instruction_call : public Instruction {
         public:
-            Instruction_call(uint64_t num_args, std::vector<Item*> args);
+            Instruction_call(uint64_t num_args, std::vector<Item*> args, std::string fn_name);
             void accept(Visitor* v);
             std::vector<Item*> args;
             uint64_t num_args;

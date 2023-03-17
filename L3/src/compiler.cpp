@@ -76,14 +76,11 @@ int main(
     //p.to_string();
   }
 
-  /*
-   * Generate x86_64 assembly.
-   */
-  if (enable_code_generator){
+  //if (enable_code_generator){
     L3::Generate_Tiles(p);
     L3::Generate_Trees(p);
     L3::Generate_L2(p);
-  }
+  //}
 
   return 0;
 }

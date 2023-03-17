@@ -23,17 +23,17 @@ namespace L3 {
 
     void Code_Generator_Visitor::visit(Instruction_return* i) {
         if (i->returns_val) {
-            outputFile << i->return_val->s << "\n";
+            outputFile << "rax <- " + i->return_val->s << "\n";
         }
         outputFile << "return\n";
         return;
     }
     void Code_Generator_Visitor::visit(Instruction_label* i) {
-        outputFile << i->s << "\n";
+        outputFile << i->label->s << "\n";
         return;
     }
     void Code_Generator_Visitor::visit(Instruction_branch* i) {
-        outputFile << i->s << "\n";
+        outputFile << i->label->s << "\n";
         return;
     }
     void Code_Generator_Visitor::visit(Instruction_call* i) {
@@ -59,7 +59,7 @@ namespace L3 {
             return;
         }
         i->call_instr->accept(&code_gen_vis);
-        outputFile << "rax <- " << i->left->s << "\n";
+        outputFile << i->left->s << "<- rax\n";
         return;
     }
     void Code_Generator_Visitor::visit(Function* fn) {
@@ -69,12 +69,7 @@ namespace L3 {
             outputFile << fn->vars[idx-1]->s << " <- " << cur_reg << "\n";
         }
         for (auto instr : fn->instructions) {
-            if (instr->is_L2) {
-                outputFile << instr->s << "\n";
-            }
-            else {
-                instr->accept(&code_gen_vis);
-            }
+            instr->accept(&code_gen_vis);
         }
         outputFile << ")\n";
     }
